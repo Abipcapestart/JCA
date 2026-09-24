@@ -1,0 +1,1498 @@
+<title>JCA Comparator Scope</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root{
+    --ground:#f6f7f9; --surface:#ffffff; --surface-2:#eef1f5; --surface-3:#e4e9f0;
+    --ink:#131922; --ink-2:#3d4757; --ink-muted:#5f6a7a;
+    --line:#dce1e9; --line-strong:#c3ccd8;
+    --accent:#1f56c9; --accent-ink:#ffffff; --accent-soft:#e8eefc; --accent-line:#b9cbf3;
+    --good:#0d7a5f; --good-soft:#e2f3ed;
+    --warn:#95650a; --warn-soft:#fbf0dc;
+    --crit:#b23127; --crit-soft:#fbe7e5;
+    --tier1:#1f56c9; --tier2:#5b7fd4; --tier3:#8d98a8;
+    --radius:6px; --radius-lg:10px;
+    --shadow:0 1px 2px rgba(19,25,34,.06), 0 4px 14px rgba(19,25,34,.05);
+    --ff-ui:"Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --ff-prose:"Source Serif 4", Georgia, "Times New Roman", serif;
+    --ff-mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#10141a; --surface:#1a1f27; --surface-2:#222833; --surface-3:#2b323d;
+      --ink:#e7ebf1; --ink-2:#c0c8d4; --ink-muted:#95a0b0;
+      --line:#2b323c; --line-strong:#3a4350;
+      --accent:#7ba3f5; --accent-ink:#0d1220; --accent-soft:#1c2740; --accent-line:#2f4670;
+      --good:#4fc3a1; --good-soft:#12302a;
+      --warn:#e0ab55; --warn-soft:#332711;
+      --crit:#ef8078; --crit-soft:#361a19;
+      --tier1:#7ba3f5; --tier2:#5b7fd4; --tier3:#7e8899;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#10141a; --surface:#1a1f27; --surface-2:#222833; --surface-3:#2b323d;
+    --ink:#e7ebf1; --ink-2:#c0c8d4; --ink-muted:#95a0b0;
+    --line:#2b323c; --line-strong:#3a4350;
+    --accent:#7ba3f5; --accent-ink:#0d1220; --accent-soft:#1c2740; --accent-line:#2f4670;
+    --good:#4fc3a1; --good-soft:#12302a;
+    --warn:#e0ab55; --warn-soft:#332711;
+    --crit:#ef8078; --crit-soft:#361a19;
+    --tier1:#7ba3f5; --tier2:#5b7fd4; --tier3:#7e8899;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--ground); color:var(--ink); font-family:var(--ff-ui);
+    font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{margin:0; text-wrap:balance; font-weight:600; letter-spacing:-.011em}
+  p{margin:0}
+  button{font:inherit; color:inherit; cursor:pointer}
+  a{color:var(--accent)}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:3px}
+  @media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+
+  /* ---------- chrome ---------- */
+  .topbar{
+    position:sticky; top:env(safe-area-inset-top,0px); z-index:40;
+    background:var(--surface); border-bottom:1px solid var(--line);
+    display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+    padding:10px 20px;
+  }
+  .brand{display:flex; align-items:baseline; gap:9px; font-weight:700; letter-spacing:-.02em}
+  .brand .mark{
+    width:22px;height:22px;border-radius:5px;background:var(--accent);
+    display:inline-block; position:relative; top:4px;
+  }
+  .brand .mark::after{
+    content:""; position:absolute; inset:6px 6px auto 6px; height:3px;
+    background:var(--accent-ink); border-radius:2px;
+    box-shadow:0 5px 0 var(--accent-ink);
+  }
+  .brand small{font-weight:500; color:var(--ink-muted); letter-spacing:.06em;
+    text-transform:uppercase; font-size:10.5px}
+
+  .stepper{display:flex; align-items:center; gap:6px; margin-inline:auto; flex-wrap:wrap}
+  .step{display:flex; align-items:center; gap:7px; padding:5px 10px; border-radius:99px;
+    color:var(--ink-muted); font-size:13.5px; font-weight:500; background:transparent;
+    border:1px solid transparent}
+  .step .n{width:19px;height:19px;border-radius:50%; display:grid; place-items:center;
+    font-family:var(--ff-mono); font-size:11px; font-weight:600;
+    border:1px solid var(--line-strong); color:var(--ink-muted)}
+  .step[aria-current="step"]{color:var(--accent); background:var(--accent-soft);
+    border-color:var(--accent-line)}
+  .step[aria-current="step"] .n{background:var(--accent); color:var(--accent-ink);
+    border-color:var(--accent)}
+  .step.done .n{background:var(--good-soft); color:var(--good); border-color:transparent}
+  .step.phase2{opacity:.55}
+  .step-rule{width:26px;height:1px;background:var(--line-strong)}
+
+  .topbar-actions{display:flex; align-items:center; gap:8px}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    border:1px solid var(--line-strong); background:var(--surface); color:var(--ink);
+    padding:7px 13px; border-radius:var(--radius); font-weight:500; font-size:14px;
+    display:inline-flex; align-items:center; gap:7px; transition:background .12s, border-color .12s;
+  }
+  .btn:hover{background:var(--surface-2)}
+  .btn-primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:600}
+  .btn-primary:hover{filter:brightness(1.07); background:var(--accent)}
+  .btn-ghost{border-color:transparent; background:transparent; color:var(--ink-muted)}
+  .btn-ghost:hover{background:var(--surface-2); color:var(--ink)}
+  .btn:disabled{opacity:.45; cursor:not-allowed}
+  .btn-sm{padding:4px 9px; font-size:13px}
+
+  /* ---------- layout ---------- */
+  .page{max-width:1280px; margin:0 auto; padding:22px 20px 64px}
+  .page-head{display:flex; align-items:flex-end; justify-content:space-between;
+    gap:16px; flex-wrap:wrap; margin-bottom:18px}
+  .page-head h1{font-size:26px}
+  .page-head .sub{color:var(--ink-muted); font-size:14px; margin-top:3px; max-width:62ch}
+
+  .grid-2{display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:18px}
+  .scope-layout{display:grid; grid-template-columns:208px minmax(0,1fr); gap:22px; align-items:start}
+  @media (max-width:860px){ .scope-layout{grid-template-columns:1fr} .railnav{position:static} }
+
+  .panel{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-lg)}
+  .panel-head{display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:13px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap}
+  .panel-head h2{font-size:15px; display:flex; align-items:center; gap:9px}
+  .panel-body{padding:16px}
+
+  .badge-letter{width:22px;height:22px;border-radius:5px; background:var(--accent);
+    color:var(--accent-ink); display:grid; place-items:center; font-size:12px; font-weight:700}
+
+  /* ---------- rail ---------- */
+  .railnav{position:sticky; top:calc(64px + env(safe-area-inset-top,0px));
+    display:flex; flex-direction:column; gap:2px;
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-lg); padding:8px}
+  .railnav .rl{font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-muted); font-weight:600; padding:6px 9px 4px}
+  .railnav a{display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:8px 9px; border-radius:var(--radius); color:var(--ink-2);
+    text-decoration:none; font-size:14px; font-weight:500}
+  .railnav a:hover{background:var(--surface-2); color:var(--ink)}
+  .railnav a .tick{width:16px;height:16px;border-radius:50%; background:var(--good-soft);
+    color:var(--good); display:grid; place-items:center; font-size:10px; font-weight:700}
+
+  /* ---------- key/value ---------- */
+  .kv{display:grid; grid-template-columns:minmax(150px,210px) minmax(0,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden}
+  .kv dt{background:var(--surface-2); padding:9px 12px; font-size:13px; font-weight:500; color:var(--ink-2)}
+  .kv dd{background:var(--surface); padding:9px 12px; margin:0; font-size:14px;
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  @media (max-width:520px){ .kv{grid-template-columns:1fr} }
+
+  .prov{font-family:var(--ff-mono); font-size:10px; letter-spacing:.04em; text-transform:uppercase;
+    padding:1px 5px; border-radius:3px; font-weight:600}
+  .prov.confirmed{background:var(--good-soft); color:var(--good)}
+  .prov.inferred{background:var(--warn-soft); color:var(--warn)}
+  .prov.not_provided{background:var(--surface-3); color:var(--ink-muted)}
+  .prov.derived_from_label{background:var(--accent-soft); color:var(--accent)}
+
+  /* ---------- tables ---------- */
+  .tablewrap{overflow-x:auto}
+  table{border-collapse:collapse; width:100%; min-width:720px}
+  thead th{
+    text-align:left; font-size:10.5px; letter-spacing:.07em; text-transform:uppercase;
+    color:var(--ink-muted); font-weight:600; padding:10px 14px;
+    border-bottom:1px solid var(--line); background:var(--surface-2); white-space:nowrap;
+  }
+  tbody td{padding:13px 14px; border-bottom:1px solid var(--line); vertical-align:top; font-size:14px}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:var(--surface-2)}
+  .cname{
+    background:none; border:0; padding:0; text-align:left; font-weight:600; color:var(--ink);
+    text-decoration:underline; text-decoration-color:var(--line-strong);
+    text-underline-offset:3px; font-size:14.5px;
+  }
+  .cname:hover{color:var(--accent); text-decoration-color:var(--accent)}
+  .rowsub{color:var(--ink-muted); font-size:12.5px; margin-top:3px}
+
+  .catrow td{background:var(--surface-2); font-size:10.5px; letter-spacing:.07em;
+    text-transform:uppercase; font-weight:600; color:var(--ink-2); padding:8px 14px}
+
+  /* ---------- chips / badges ---------- */
+  .chips{display:flex; flex-wrap:wrap; gap:3px; align-items:center}
+  .ms{
+    font-family:var(--ff-mono); font-size:10.5px; font-weight:600; letter-spacing:.02em;
+    padding:2px 5px; border-radius:3px; border:1px solid var(--line);
+    color:var(--ink-muted); background:var(--surface);
+  }
+  .ms.soc{background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent)}
+  .ms.more{border-style:dashed}
+  .count{font-family:var(--ff-mono); font-size:11.5px; color:var(--ink-muted); margin-top:5px;
+    font-variant-numeric:tabular-nums}
+
+  .tier{font-family:var(--ff-mono); font-size:10px; font-weight:600; padding:2px 6px;
+    border-radius:3px; letter-spacing:.03em; white-space:nowrap}
+  .tier.t1{background:var(--tier1); color:var(--accent-ink)}
+  .tier.t2{background:var(--accent-soft); color:var(--tier2); border:1px solid var(--accent-line)}
+  .tier.t3{background:transparent; color:var(--tier3); border:1px solid var(--line-strong)}
+
+  .flag{font-size:11px; font-weight:600; padding:2px 7px; border-radius:99px; white-space:nowrap}
+  .flag.ok{background:var(--good-soft); color:var(--good)}
+  .flag.warn{background:var(--warn-soft); color:var(--warn)}
+  .flag.crit{background:var(--crit-soft); color:var(--crit)}
+  .flag.neutral{background:var(--surface-3); color:var(--ink-muted)}
+
+  /* ---------- toggle ---------- */
+  .seg{display:inline-flex; background:var(--surface-2); border:1px solid var(--line);
+    border-radius:var(--radius); padding:2px; gap:2px}
+  .seg button{border:0; background:transparent; padding:5px 12px; border-radius:4px;
+    font-size:13.5px; font-weight:500; color:var(--ink-muted)}
+  .seg button[aria-pressed="true"]{background:var(--surface); color:var(--ink);
+    box-shadow:0 1px 2px rgba(19,25,34,.09); font-weight:600}
+
+  /* ---------- completeness ---------- */
+  .cov{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:8px}
+  .cov-item{display:flex; align-items:flex-start; gap:9px; padding:9px 11px;
+    border:1px solid var(--line); border-radius:var(--radius); background:var(--surface)}
+  .cov-item.none{background:var(--warn-soft); border-color:transparent}
+  .dot{width:8px;height:8px;border-radius:50%; margin-top:6px; flex:none}
+  .dot.found{background:var(--good)} .dot.none{background:var(--warn)} .dot.fail{background:var(--crit)}
+  .cov-item .n{font-size:13.5px; font-weight:500; line-height:1.35}
+  .cov-item .s{font-size:11.5px; color:var(--ink-muted); margin-top:2px}
+
+  .statgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(128px,1fr)); gap:1px;
+    background:var(--line); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden}
+  .stat{background:var(--surface); padding:12px 14px}
+  .stat .v{font-family:var(--ff-mono); font-size:21px; font-weight:600;
+    font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+  .stat .l{font-size:11.5px; color:var(--ink-muted); margin-top:1px}
+  .stat.alert .v{color:var(--warn)}
+
+  /* ---------- map ---------- */
+  .msgrid{display:flex; flex-wrap:wrap; gap:4px}
+  .mscell{border:1px solid var(--line); border-radius:var(--radius); padding:6px 8px;
+    min-width:58px; background:var(--surface)}
+  .mscell .c{font-family:var(--ff-mono); font-size:11.5px; font-weight:600}
+  .mscell .k{font-size:10.5px; color:var(--ink-muted); margin-top:1px;
+    font-variant-numeric:tabular-nums}
+  .mscell.hit{background:var(--accent-soft); border-color:var(--accent-line)}
+  .mscell.hit .c{color:var(--accent)}
+
+  .legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--ink-muted);
+    align-items:center}
+  .legend i{width:10px;height:10px;border-radius:2px; display:inline-block; margin-right:5px;
+    vertical-align:-1px}
+
+  /* ---------- prose ---------- */
+  .why{font-family:var(--ff-prose); font-size:15.5px; line-height:1.55; color:var(--ink-2)}
+  .note{font-size:12.5px; color:var(--ink-muted)}
+
+  /* ---------- field picker ---------- */
+  .field-row{display:grid; grid-template-columns:minmax(150px,200px) minmax(0,1fr);
+    gap:12px; align-items:center; padding:9px 0; border-bottom:1px solid var(--line)}
+  .field-row:last-of-type{border-bottom:0}
+  .field-row label{font-size:13.5px; font-weight:500; color:var(--ink-2)}
+  .req{color:var(--crit); font-weight:700}
+  input[type=text], textarea, select{
+    width:100%; padding:8px 11px; border:1px solid var(--line-strong); border-radius:var(--radius);
+    background:var(--surface); color:var(--ink); font:inherit; font-size:14px;
+  }
+  input[type=text]:focus, textarea:focus{border-color:var(--accent); outline:none;
+    box-shadow:0 0 0 3px var(--accent-soft)}
+  .picker{border:1px dashed var(--line-strong); border-radius:var(--radius);
+    padding:12px; margin-top:12px; background:var(--surface-2)}
+  .picker h4{font-size:10.5px; letter-spacing:.07em; text-transform:uppercase;
+    color:var(--ink-muted); margin-bottom:8px}
+  .pills{display:flex; flex-wrap:wrap; gap:6px}
+  .pill{border:1px solid var(--line-strong); background:var(--surface); border-radius:99px;
+    padding:4px 11px; font-size:13px; color:var(--ink-2)}
+  .pill:hover{border-color:var(--accent); color:var(--accent)}
+  .pill[aria-pressed="true"]{background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent)}
+
+  /* ---------- modal ---------- */
+  dialog{
+    border:1px solid var(--line); border-radius:var(--radius-lg); padding:0;
+    background:var(--surface); color:var(--ink); max-width:680px; width:calc(100% - 32px);
+    box-shadow:var(--shadow);
+  }
+  dialog::backdrop{background:rgba(10,14,20,.5)}
+  .dlg-head{display:flex; justify-content:space-between; gap:14px; align-items:flex-start;
+    padding:18px 20px 14px; border-bottom:1px solid var(--line)}
+  .dlg-head h3{font-size:19px}
+  .dlg-head .sub{color:var(--ink-muted); font-size:13.5px; margin-top:2px}
+  .dlg-body{padding:18px 20px; display:flex; flex-direction:column; gap:18px;
+    max-height:min(62vh,620px); overflow-y:auto}
+  .dlg-foot{padding:13px 20px; border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap}
+  .sect-l{font-size:10.5px; letter-spacing:.07em; text-transform:uppercase;
+    color:var(--ink-muted); font-weight:600; margin-bottom:7px}
+  .srclist{display:flex; flex-direction:column; border:1px solid var(--line);
+    border-radius:var(--radius); overflow:hidden}
+  .srclist div{display:flex; align-items:center; gap:10px; padding:9px 12px;
+    border-bottom:1px solid var(--line); font-size:13.5px}
+  .srclist div:last-child{border-bottom:0}
+  .ev{border-left:2px solid var(--line-strong); padding:2px 0 2px 12px;
+    font-size:13px; color:var(--ink-2); margin-bottom:9px}
+  .ev.for{border-left-color:var(--good)}
+  .ev.against{border-left-color:var(--crit)}
+  .ev q{font-family:var(--ff-prose); font-style:italic}
+
+  .banner{display:flex; gap:11px; align-items:flex-start; padding:12px 14px;
+    border-radius:var(--radius); font-size:13.5px; line-height:1.45}
+  .banner.info{background:var(--accent-soft); color:var(--ink-2); border:1px solid var(--accent-line)}
+  .banner.warn{background:var(--warn-soft); color:var(--ink-2)}
+  .banner b{color:var(--ink)}
+
+  .stack{display:flex; flex-direction:column; gap:18px}
+  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .spacer{flex:1}
+  .hidden{display:none !important}
+</style>
+
+<header class="topbar">
+  <div class="brand"><span class="mark"></span>MadeAI <small>Joint Clinical Assessment</small></div>
+
+  <nav class="stepper" aria-label="Workflow">
+    <button class="step" id="tab-1" data-screen="1" aria-current="step">
+      <span class="n">1</span> Define product
+    </button>
+    <span class="step-rule"></span>
+    <button class="step" id="tab-2" data-screen="2"><span class="n">2</span> Comparator &amp; outcome scope</button>
+    <span class="step-rule"></span>
+    <span class="step phase2" title="PICO-set generation is Phase 2 and is not produced by this service">
+      <span class="n">3</span> PICO sets <span class="flag neutral">Phase&nbsp;2</span>
+    </span>
+  </nav>
+
+  <div class="topbar-actions">
+    <button class="btn btn-ghost btn-sm" id="themeBtn" title="Switch theme">Theme</button>
+    <button class="btn btn-ghost btn-sm" id="manifestBtn">Run manifest</button>
+  </div>
+</header>
+
+<!-- ===================== SCREEN 1 ===================== -->
+<main class="page" id="screen-1">
+  <div class="page-head">
+    <div>
+      <h1>Define your product</h1>
+      <p class="sub">Only indication and product name are required. Every other field is optional
+        and may improve precision — none of them can block the request.</p>
+    </div>
+    <button class="btn btn-primary" id="generateBtn">Generate comparators &amp; outcomes</button>
+  </div>
+
+  <div class="grid-2">
+    <section class="panel">
+      <div class="panel-head"><h2><span class="badge-letter">P</span> Population</h2></div>
+      <div class="panel-body">
+        <div id="popFields"></div>
+        <div class="picker">
+          <h4>Add a population field</h4>
+          <div class="pills" id="popPicker"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2><span class="badge-letter">I</span> Intervention</h2></div>
+      <div class="panel-body">
+        <div id="intFields"></div>
+        <div class="picker">
+          <h4>Add an intervention field</h4>
+          <div class="pills" id="intPicker"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="banner info" style="margin-top:18px">
+    <div>
+      <b>Two fields carry unusual weight.</b>
+      <em>Pivotal trial identifier</em> is queried directly against the trial registries, so the
+      comparator arm is read as a typed field rather than inferred from prose.
+      <em>Claimed / anticipated indication wording</em> is what bounds the population when no
+      marketing authorisation exists yet — which is the normal case for pre-submission scoping.
+    </div>
+  </div>
+</main>
+
+<!-- ===================== SCREEN 2 ===================== -->
+<main class="page hidden" id="screen-2">
+  <div class="page-head">
+    <div>
+      <h1>Comparator &amp; outcome scope</h1>
+      <p class="sub" id="scopeSub"></p>
+    </div>
+    <div class="row">
+      <button class="btn" id="exportBtn">Export JSON</button>
+      <button class="btn btn-primary" id="handoffBtn" title="Phase 2 consumes this output">
+        Hand off to PICO sets
+      </button>
+    </div>
+  </div>
+
+  <div class="scope-layout">
+    <nav class="railnav" aria-label="Sections">
+      <div class="rl">Scope</div>
+      <a href="#sec-population">Population <span class="tick">✓</span></a>
+      <a href="#sec-intervention">Intervention <span class="tick">✓</span></a>
+      <a href="#sec-comparators">Comparators <span class="tick">✓</span></a>
+      <a href="#sec-outcomes">Outcomes <span class="tick">✓</span></a>
+      <div class="rl">Assurance</div>
+      <a href="#sec-completeness">Completeness</a>
+      <a href="#sec-gaps">What wasn't found</a>
+    </nav>
+
+    <div class="stack">
+      <!-- Population -->
+      <section class="panel" id="sec-population">
+        <div class="panel-head">
+          <h2><span class="badge-letter">P</span> Confirmed population</h2>
+          <span class="note">Carried over from Define product. Everything stated here scopes what follows.</span>
+        </div>
+        <div class="panel-body stack">
+          <dl class="kv" id="popSummary"></dl>
+          <div>
+            <div class="sect-l">Scope boundary applied to evidence</div>
+            <div class="row" id="boundaryChips"></div>
+            <p class="note" style="margin-top:8px" id="unboundNote"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Intervention -->
+      <section class="panel" id="sec-intervention">
+        <div class="panel-head">
+          <h2><span class="badge-letter">I</span> Intervention</h2>
+          <span class="note">Constant across the whole scope.</span>
+        </div>
+        <div class="panel-body"><dl class="kv" id="intSummary"></dl></div>
+      </section>
+
+      <!-- Comparators -->
+      <section class="panel" id="sec-comparators">
+        <div class="panel-head">
+          <h2><span class="badge-letter">C</span> Comparators</h2>
+          <div class="row">
+            <div class="seg" role="group" aria-label="Comparator view">
+              <button id="viewByComparator" aria-pressed="true">By comparator</button>
+              <button id="viewByState" aria-pressed="false">By EU Member State</button>
+            </div>
+            <button class="btn btn-sm" id="addComparatorBtn">+ Add comparator</button>
+          </div>
+        </div>
+
+        <div id="byComparatorView">
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:24%">Comparator</th>
+                  <th style="width:21%">EU Member States</th>
+                  <th style="width:21%">Class / mechanism</th>
+                  <th style="width:22%">Indication</th>
+                  <th style="width:12%">Source tier</th>
+                </tr>
+              </thead>
+              <tbody id="comparatorRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="byStateView" class="hidden">
+          <div class="panel-body stack">
+            <div class="legend">
+              <span><i style="background:var(--accent-soft); border:1px solid var(--accent-line)"></i>comparator identified</span>
+              <span><i style="background:var(--surface); border:1px solid var(--line)"></i>no comparator identified</span>
+            </div>
+            <div class="msgrid" id="stateGrid"></div>
+            <p class="note">Every one of the 27 Member States appears, always. A state with nothing
+              found is named explicitly rather than omitted — the absence is a result.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Outcomes -->
+      <section class="panel" id="sec-outcomes">
+        <div class="panel-head">
+          <h2><span class="badge-letter">O</span> Outcomes</h2>
+          <div class="row">
+            <span class="note">One list, EU-wide. Outcomes do not vary by Member State.</span>
+            <button class="btn btn-sm" id="addOutcomeBtn">+ Add outcome</button>
+          </div>
+        </div>
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:40%">Outcome</th>
+                <th style="width:24%">Unit of measurement</th>
+                <th style="width:20%">Catalog status</th>
+                <th style="width:16%">Source tier</th>
+              </tr>
+            </thead>
+            <tbody id="outcomeRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Completeness -->
+      <section class="panel" id="sec-completeness">
+        <div class="panel-head">
+          <h2>Completeness</h2>
+          <span class="note">What was searched, not only what was found.</span>
+        </div>
+        <div class="panel-body stack">
+          <div class="statgrid" id="statGrid"></div>
+          <div>
+            <div class="sect-l">Standard outcome catalog — all 11 items</div>
+            <div class="cov" id="catalogCoverage"></div>
+          </div>
+          <div id="assertionList"></div>
+        </div>
+      </section>
+
+      <!-- Gaps -->
+      <section class="panel" id="sec-gaps">
+        <div class="panel-head">
+          <h2>What wasn't found</h2>
+          <span class="note">Candidates retrieved and then excluded, with the reason.</span>
+        </div>
+        <div class="panel-body stack" id="gapsBody"></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<!-- ===================== MODALS ===================== -->
+<dialog id="detailDialog">
+  <div class="dlg-head">
+    <div>
+      <h3 id="dlgTitle"></h3>
+      <p class="sub" id="dlgSub"></p>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="dlgClose" aria-label="Close">✕</button>
+  </div>
+  <div class="dlg-body" id="dlgBody"></div>
+  <div class="dlg-foot">
+    <span class="note" id="dlgFoot"></span>
+    <button class="btn btn-primary btn-sm" id="dlgDone">Done</button>
+  </div>
+</dialog>
+
+<dialog id="manifestDialog">
+  <div class="dlg-head">
+    <div><h3>Run manifest</h3>
+      <p class="sub">Everything needed to reproduce and explain this run.</p></div>
+    <button class="btn btn-ghost btn-sm" id="manClose" aria-label="Close">✕</button>
+  </div>
+  <div class="dlg-body" id="manifestBody"></div>
+  <div class="dlg-foot"><span class="note">Written to the project audit trail on every run.</span>
+    <button class="btn btn-primary btn-sm" id="manDone">Done</button></div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =======================================================================
+     Data. Talks to the Phase 1 API when one is reachable; otherwise renders
+     the bundled example run so the interface is inspectable standalone.
+     ======================================================================= */
+
+  var API = "";                 // same-origin
+  var state = { output: null, live: false, view: "comparator" };
+
+  var MEMBER_STATES = [
+    ["Austria","AT"],["Belgium","BE"],["Bulgaria","BG"],["Croatia","HR"],["Cyprus","CY"],
+    ["Czech Republic","CZ"],["Denmark","DK"],["Estonia","EE"],["Finland","FI"],["France","FR"],
+    ["Germany","DE"],["Greece","GR"],["Hungary","HU"],["Ireland","IE"],["Italy","IT"],
+    ["Latvia","LV"],["Lithuania","LT"],["Luxembourg","LU"],["Malta","MT"],["Netherlands","NL"],
+    ["Poland","PL"],["Portugal","PT"],["Romania","RO"],["Slovakia","SK"],["Slovenia","SI"],
+    ["Spain","ES"],["Sweden","SE"]
+  ];
+  var CODE = {}; MEMBER_STATES.forEach(function (m) { CODE[m[0]] = m[1]; });
+
+  var POP_FIELDS = [
+    ["indication_disease","Indication / disease",true,"top"],
+    ["age_group","Age group",false,"Licensed population"],
+    ["sex","Sex",false,"Licensed population"],
+    ["stage_severity","Stage / severity",false,"Licensed population"],
+    ["molecular_biomarker_status","Molecular / biomarker status",false,"Licensed population"],
+    ["prior_therapy_line","Prior therapy / line",false,"Licensed population"],
+    ["performance_status","Performance status",false,"Licensed population"],
+    ["other_characteristics","Other characteristics",false,"Licensed population"],
+    ["itt_differs","Is the intended-to-treat population the same?",false,"Licensed population"],
+    ["disease_subtype_histology","Disease subtype / histology",false,"Disease classification"],
+    ["icd_disease_code","ICD disease code",false,"Disease classification"],
+    ["organ_function_comorbidity","Key organ function / comorbidity",false,"Disease classification"],
+    ["orphan_rare_disease","Orphan / rare-disease",false,"Disease classification"],
+    ["therapeutic_area","Therapeutic area",false,"Disease classification"],
+    ["treatment_setting_intent","Treatment setting / intent",false,"Disease classification"]
+  ];
+  var INT_FIELDS = [
+    ["product_name_inn","Product name (INN)",true],
+    ["therapeutic_class_mechanism","Therapeutic class / mechanism",false],
+    ["generic_name","Generic name",false],
+    ["route_of_administration","Route of administration",false],
+    ["dose","Dose(s)",false],
+    ["dosing_schedule","Dosing schedule",false],
+    ["treatment_duration","Treatment duration",false],
+    ["line_of_therapy","Line of therapy",false],
+    ["product_modality","Product modality / type",false],
+    ["regulatory_pathway","MA type / regulatory pathway",false],
+    ["pharmaceutical_form_strength","Pharmaceutical form / strength",false],
+    ["companion_diagnostic","Companion diagnostic",false],
+    ["pivotal_trial_identifiers","Pivotal trial identifier(s)",false],
+    ["claimed_indication_wording","Claimed / anticipated indication wording",false]
+  ];
+
+  var PRESET = {
+    population: {
+      indication_disease: "Extensive-stage small cell lung cancer",
+      stage_severity: "Extensive-stage disease",
+      prior_therapy_line: "Progressed on or after first-line platinum-based chemotherapy",
+      other_characteristics: "Chemotherapy-free interval of at least 90 days since the last platinum dose",
+      orphan_rare_disease: "Yes"
+    },
+    intervention: {
+      product_name_inn: "Examplimab",
+      line_of_therapy: "Second line or later",
+      therapeutic_class_mechanism: "Bispecific T-cell engager",
+      pivotal_trial_identifiers: "NCT09999999",
+      claimed_indication_wording:
+        "Monotherapy for adult patients with extensive-stage small cell lung cancer who require systemic therapy following progression on or after platinum-based chemotherapy"
+    }
+  };
+
+  /* Bundled example run — a real pipeline output shape, marked as an example. */
+  var EXAMPLE = buildExample();
+
+  /* ---------------------- helpers ---------------------- */
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function tierBadges(tiers) {
+    if (!tiers || !tiers.length) return '<span class="tier t3">No tier</span>';
+    return tiers.map(function (t) {
+      return '<span class="tier t' + t + '">Tier ' + t + "</span>";
+    }).join(" ");
+  }
+  function provTag(p) {
+    var label = { confirmed: "Confirmed", inferred: "Inferred",
+                  not_provided: "Not provided", derived_from_label: "From label" }[p] || p;
+    return '<span class="prov ' + esc(p) + '">' + esc(label) + "</span>";
+  }
+
+  /* ---------------------- screen 1 ---------------------- */
+  var shown = { population: {}, intervention: {} };
+
+  function initScreen1() {
+    Object.keys(PRESET.population).forEach(function (k) { shown.population[k] = true; });
+    Object.keys(PRESET.intervention).forEach(function (k) { shown.intervention[k] = true; });
+    renderFields();
+  }
+
+  function renderFields() {
+    renderGroup("popFields", "popPicker", POP_FIELDS, "population");
+    renderGroup("intFields", "intPicker", INT_FIELDS, "intervention");
+  }
+
+  function renderGroup(fieldsId, pickerId, defs, kind) {
+    var host = el(fieldsId), picker = el(pickerId);
+    host.innerHTML = ""; picker.innerHTML = "";
+    defs.forEach(function (d) {
+      var key = d[0], label = d[1], mandatory = d[2];
+      if (!mandatory && !shown[kind][key]) {
+        var pill = document.createElement("button");
+        pill.className = "pill"; pill.type = "button";
+        pill.textContent = "+ " + label;
+        pill.addEventListener("click", function () { shown[kind][key] = true; renderFields(); });
+        picker.appendChild(pill);
+        return;
+      }
+      var row = document.createElement("div");
+      row.className = "field-row";
+      row.innerHTML =
+        '<label for="f-' + esc(key) + '">' + esc(label) +
+        (mandatory ? ' <span class="req" aria-label="required">*</span>' : "") + "</label>" +
+        '<input type="text" id="f-' + esc(key) + '" name="' + esc(key) + '" value="' +
+        esc(PRESET[kind][key] || "") + '" placeholder="' +
+        (mandatory ? "Required" : "Optional") + '">';
+      host.appendChild(row);
+    });
+    if (!picker.children.length) {
+      picker.innerHTML = '<span class="note">Every field is on the form.</span>';
+    }
+  }
+
+  function collect(kind, defs) {
+    var out = {};
+    defs.forEach(function (d) {
+      var input = el("f-" + d[0]);
+      if (input && input.value.trim()) out[d[0]] = input.value.trim();
+    });
+    return out;
+  }
+
+  /* ---------------------- run ---------------------- */
+  function generate() {
+    var btn = el("generateBtn");
+    var payload = {
+      population: collect("population", POP_FIELDS),
+      intervention: collect("intervention", INT_FIELDS),
+      added_fields: Object.keys(shown.population).concat(Object.keys(shown.intervention))
+    };
+    if (!payload.population.indication_disease || !payload.intervention.product_name_inn) {
+      openDetail("Review your input",
+        "Two fields are mandatory",
+        '<div class="banner warn"><div>Indication / disease and Product name (INN) must both ' +
+        'have content before the scope can be generated. Correct them on the form — ' +
+        'the highlighted fields are waiting for you.</div></div>',
+        "Nothing has been searched yet.");
+      return;
+    }
+
+    btn.disabled = true; btn.textContent = "Generating…";
+    fetch(API + "/api/runs", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }).then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+      .then(function (res) {
+        if (!res.ok && res.body && res.body.input_validation) {
+          renderBlocked(res.body.input_validation); return;
+        }
+        state.output = res.body.output; state.live = true; renderScope(); go(2);
+      })
+      .catch(function () {
+        state.output = EXAMPLE; state.live = false; renderScope(); go(2);
+      })
+      .then(function () { btn.disabled = false; btn.textContent = "Generate comparators & outcomes"; });
+  }
+
+  function renderBlocked(v) {
+    var items = (v.fix_items || []).map(function (f) {
+      return "<li><b>" + esc((f.fields || []).join(", ")) + "</b> — " + esc(f.explanation) + "</li>";
+    }).join("");
+    openDetail("Review your input", "These must be corrected before generation begins",
+      '<div class="banner warn"><div><ul style="margin:0; padding-left:18px">' + items +
+      "</ul></div></div>", "No retrieval has run.");
+  }
+
+  /* ---------------------- screen 2 ---------------------- */
+  function renderScope() {
+    var o = state.output;
+    var pop = o.populations[0], boundary = o.scope_boundaries[0];
+
+    el("scopeSub").innerHTML =
+      esc(o.comparators.length) + " comparator" + (o.comparators.length === 1 ? "" : "s") +
+      " and " + countOutcomes(o) + " outcomes across all 27 Member States." +
+      (state.live ? "" :
+        ' <span class="flag warn">Example run</span> — bundled output, not a live retrieval.');
+
+    /* population */
+    var rows = "";
+    POP_FIELDS.forEach(function (d) {
+      var f = pop.fields[d[0]];
+      if (!f || !f.value) return;
+      rows += "<dt>" + esc(d[1]) + "</dt><dd>" + esc(f.value) + provTag(f.provenance) + "</dd>";
+    });
+    el("popSummary").innerHTML = rows;
+
+    var chips = "", unbound = [];
+    Object.keys(boundary.facets).forEach(function (k) {
+      var f = boundary.facets[k];
+      if (f.value && (f.provenance === "confirmed" || f.provenance === "derived_from_label")) {
+        chips += '<span class="flag ' + (f.must_match ? "ok" : "neutral") + '">' +
+          esc(k.replace(/_/g, " ")) + (f.must_match ? " · discriminating" : "") + "</span>";
+      } else { unbound.push(k.replace(/_/g, " ")); }
+    });
+    el("boundaryChips").innerHTML = chips || '<span class="note">No facets bound.</span>';
+    el("unboundNote").textContent =
+      "Not specified, so never used to reject evidence: " + unbound.join(", ") + ".";
+
+    /* intervention */
+    var irows = "";
+    INT_FIELDS.forEach(function (d) {
+      var f = o.intervention.fields[d[0]];
+      if (!f || !f.value) return;
+      irows += "<dt>" + esc(d[1]) + "</dt><dd>" + esc(f.value) + provTag(f.provenance) + "</dd>";
+    });
+    irows += "<dt>Therapeutic area(s)</dt><dd>" +
+      esc((o.therapeutic_areas.areas || []).join(", ")) +
+      '<span class="prov derived_from_label">Applied to source selection</span></dd>';
+    el("intSummary").innerHTML = irows;
+
+    renderComparators(); renderStateGrid(); renderOutcomes();
+    renderCompleteness(); renderGaps();
+  }
+
+  function countOutcomes(o) {
+    return o.outcomes.clinical_effectiveness.length + o.outcomes.safety.length +
+      o.outcomes.quality_of_life.length + o.outcomes.clinician_patient_reported.length;
+  }
+
+  function renderComparators() {
+    var body = el("comparatorRows"); body.innerHTML = "";
+    state.output.comparators.forEach(function (c, i) {
+      var soc = c.per_member_state.filter(function (v) { return v.verdict === "standard_of_care"; });
+      var codes = soc.slice(0, 5).map(function (v) {
+        return '<span class="ms soc">' + esc(CODE[v.member_state] || "??") + "</span>";
+      }).join("");
+      if (soc.length > 5) codes += '<span class="ms more">+' + (soc.length - 5) + "</span>";
+      if (!soc.length) codes = '<span class="ms">none state-specific</span>';
+
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td><button class='cname' data-idx='" + i + "'>" + esc(c.generic_name) + "</button>" +
+          (c.origin === "user_added" ? ' <span class="flag neutral">Added by reviewer</span>' : "") +
+          (c.general_evidence_flag ? ' <span class="flag warn">General evidence</span>' : "") +
+          "<div class='rowsub'>" + esc(c.line_of_therapy) + "</div></td>" +
+        '<td><div class="chips">' + codes + "</div>" +
+          '<div class="count">' + soc.length + " of 27</div></td>" +
+        "<td>" + (c.class_or_mechanism
+            ? esc(c.class_or_mechanism) +
+              '<div class="rowsub">from ' + esc(c.class_source.replace(/_/g, " ")) + "</div>"
+            : '<span class="note">Not resolved</span>') + "</td>" +
+        "<td>" + esc(c.indication || "—") + "</td>" +
+        "<td>" + tierBadges(c.tiers) +
+          (c.cross_tier_confirmed ? '<div class="rowsub">Confirmed across tiers</div>' : "") + "</td>";
+      body.appendChild(tr);
+    });
+    Array.prototype.forEach.call(body.querySelectorAll(".cname"), function (b) {
+      b.addEventListener("click", function () { showComparator(+b.dataset.idx); });
+    });
+  }
+
+  function renderStateGrid() {
+    var host = el("stateGrid"); host.innerHTML = "";
+    var byState = {};
+    state.output.by_member_state.forEach(function (e) { byState[e.member_state] = e; });
+    MEMBER_STATES.forEach(function (m) {
+      var entry = byState[m[0]] || { comparators: [], status: "not_identified" };
+      var hit = entry.status === "identified";
+      var d = document.createElement("div");
+      d.className = "mscell" + (hit ? " hit" : "");
+      d.title = m[0] + " — " + (hit ? entry.comparators.join(", ") : entry.finding ||
+        "No comparator is identified");
+      d.innerHTML = '<div class="c">' + esc(m[1]) + "</div><div class='k'>" +
+        (hit ? entry.comparators.length + " found" : "none") + "</div>";
+      host.appendChild(d);
+    });
+  }
+
+  function renderOutcomes() {
+    var o = state.output.outcomes, body = el("outcomeRows");
+    body.innerHTML = "";
+    [["Clinical effectiveness", o.clinical_effectiveness],
+     ["Safety", o.safety],
+     ["Quality of life", o.quality_of_life],
+     ["Clinician / patient-reported outcomes (COA)", o.clinician_patient_reported]
+    ].forEach(function (pair) {
+      var head = document.createElement("tr");
+      head.className = "catrow";
+      head.innerHTML = "<td colspan='4'>" + esc(pair[0]) +
+        " · " + pair[1].length + "</td>";
+      body.appendChild(head);
+      if (!pair[1].length) {
+        var empty = document.createElement("tr");
+        empty.innerHTML = "<td colspan='4'><span class='flag warn'>No outcome identified " +
+          "in this category</span> <span class='note'>The required source classes were " +
+          "searched and returned nothing. This is a reported result, not an omission.</span></td>";
+        body.appendChild(empty);
+        return;
+      }
+      pair[1].forEach(function (out, i) {
+        var tr = document.createElement("tr");
+        tr.innerHTML =
+          "<td><button class='cname' data-cat='" + esc(pair[0]) + "' data-i='" + i + "'>" +
+            esc(out.concept) + "</button>" +
+            (out.origin === "user_added" ? ' <span class="flag neutral">Added by reviewer</span>' : "") +
+            (out.instrument ? "<div class='rowsub'>" + esc(out.instrument) + "</div>" : "") + "</td>" +
+          "<td>" + esc(out.unit_of_measurement) + "</td>" +
+          "<td>" + (out.listed
+              ? '<span class="flag ok">Listed</span>'
+              : '<span class="flag warn">Unlisted</span>') +
+            (out.requirement_type
+              ? "<div class='rowsub'>" + esc(out.requirement_type.replace(/_/g, " ")) + "</div>"
+              : "") + "</td>" +
+          "<td>" + tierBadges(out.tiers) + "</td>";
+        body.appendChild(tr);
+      });
+    });
+    Array.prototype.forEach.call(body.querySelectorAll(".cname"), function (b) {
+      b.addEventListener("click", function () { showOutcome(b.dataset.cat, +b.dataset.i); });
+    });
+  }
+
+  function renderCompleteness() {
+    var o = state.output, c = o.completeness;
+    var ms = c.member_states || {};
+    var missing = (o.outcomes.catalog_coverage || []).filter(function (x) {
+      return x.status !== "evidence_found";
+    }).length;
+
+    el("statGrid").innerHTML =
+      stat(ms.searched, "of 27 states searched") +
+      stat(ms.with_findings, "states with a comparator") +
+      stat(ms.no_findings, "states with none", ms.no_findings > 0) +
+      stat(ms.search_failed, "retrieval failures", ms.search_failed > 0) +
+      stat(missing, "catalog outcomes not found", missing > 0);
+
+    el("catalogCoverage").innerHTML = (o.outcomes.catalog_coverage || []).map(function (x) {
+      var found = x.status === "evidence_found";
+      return '<div class="cov-item' + (found ? "" : " none") + '">' +
+        '<span class="dot ' + (found ? "found" : "none") + '"></span>' +
+        '<div><div class="n">' + esc(x.display_name) + "</div>" +
+        '<div class="s">' + (found ? "Evidence found"
+          : esc(x.detail || "No source stated this outcome")) + "</div></div></div>";
+    }).join("");
+
+    el("assertionList").innerHTML =
+      '<div class="sect-l">Structural assertions</div>' +
+      '<div class="srclist">' + (c.assertions || []).map(function (a) {
+        return "<div><span class='flag " + (a.passed ? "ok" : "crit") + "'>" +
+          (a.passed ? "Pass" : "Fail") + "</span><span>" +
+          esc(a.name.replace(/_/g, " ")) + "</span>" +
+          (a.detail ? "<span class='note'>" + esc(a.detail) + "</span>" : "") + "</div>";
+      }).join("") + "</div>";
+  }
+
+  function stat(v, label, alert) {
+    return '<div class="stat' + (alert ? " alert" : "") + '"><div class="v">' +
+      esc(v == null ? "–" : v) + '</div><div class="l">' + esc(label) + "</div></div>";
+  }
+
+  function renderGaps() {
+    var v = state.output.validation || {};
+    var host = el("gapsBody");
+    var rows = (v.excluded || []).map(function (e) {
+      return "<div class='ev against'><b>" + esc(e.value) + "</b> — excluded at " +
+        esc((e.stage || "").replace(/_/g, " ")) + ".<br><q>" + esc(e.reason) + "</q></div>";
+    }).join("");
+    host.innerHTML =
+      '<div class="statgrid">' +
+        stat(v.records_extracted, "claims extracted") +
+        stat(v.claim_validated, "validated against a re-fetched source") +
+        stat(v.claim_rejected, "claims rejected", v.claim_rejected > 0) +
+        stat(v.scope_out, "candidates ruled out of scope", v.scope_out > 0) +
+        stat(v.scope_uncertain, "uncertain, surfaced for review", v.scope_uncertain > 0) +
+      "</div>" +
+      (rows ? "<div>" + rows + "</div>"
+            : '<p class="note">Nothing was excluded in this run.</p>');
+  }
+
+  /* ---------------------- detail modals ---------------------- */
+  function showComparator(i) {
+    var c = state.output.comparators[i];
+    var soc = c.per_member_state.filter(function (v) { return v.verdict === "standard_of_care"; })
+      .map(function (v) { return v.member_state; });
+
+    var grid = MEMBER_STATES.map(function (m) {
+      var on = soc.indexOf(m[0]) >= 0;
+      return '<span class="ms' + (on ? " soc" : "") + '" title="' + esc(m[0]) + '">' +
+        esc(m[1]) + "</span>";
+    }).join("");
+
+    var sources = (c.sources || []).map(function (s) {
+      return "<div>" + tierBadges([s.tier]) + "<span>" + esc(s.display_name) + "</span></div>";
+    }).join("") || "<div><span class='note'>No sources recorded.</span></div>";
+
+    var adj = c.scope_adjudication || {};
+    var evFor = (adj.evidence_for || []).map(function (e) {
+      return "<div class='ev for'><q>" + esc(e.detail || e.quote || "matched") + "</q></div>";
+    }).join("");
+    var evAgainst = (adj.evidence_against || []).map(function (e) {
+      return "<div class='ev against'>" + esc(e.facet_conflict ? e.facet_conflict + ": " : "") +
+        "<q>" + esc(e.detail || e.quote || "") + "</q></div>";
+    }).join("");
+
+    var html =
+      '<div><div class="sect-l">Why it is included</div>' +
+        '<p class="why">' + esc(c.rationale) + "</p></div>" +
+
+      '<div><div class="sect-l">Scope decision</div>' +
+        '<div class="row"><span class="flag ' +
+          (adj.verdict === "in_scope" ? "ok" : adj.verdict === "out_of_scope" ? "crit" : "warn") +
+          '">' + esc((adj.verdict || "not adjudicated").replace(/_/g, " ")) + "</span>" +
+        (adj.decisive_facet ? '<span class="note">decisive facet: ' +
+          esc(adj.decisive_facet.replace(/_/g, " ")) + "</span>" : "") + "</div>" +
+        (adj.reason ? '<p class="note" style="margin-top:6px">' + esc(adj.reason) + "</p>" : "") +
+        (evFor ? '<div style="margin-top:10px"><div class="sect-l">Evidence for</div>' + evFor + "</div>" : "") +
+        (evAgainst ? '<div style="margin-top:10px"><div class="sect-l">Evidence against</div>' + evAgainst + "</div>" : "") +
+      "</div>" +
+
+      '<div><div class="sect-l">Sources</div>' + sources + "</div>" +
+
+      '<div><div class="sect-l">EU Member State coverage · ' + soc.length + " of 27</div>" +
+        '<div class="chips" style="margin-bottom:9px">' + grid + "</div>" +
+        '<div class="legend">' +
+          '<span><i style="background:var(--accent-soft); border:1px solid var(--accent-line)"></i>standard of care</span>' +
+          '<span><i style="background:var(--surface); border:1px solid var(--line)"></i>not established</span>' +
+        "</div>" +
+        '<p class="note" style="margin-top:8px">“Not established” means this state\'s sources were ' +
+        "searched and said nothing either way — not that the treatment is unused there. " +
+        "Asserting that would need a source that says so.</p></div>" +
+
+      '<div><div class="sect-l">Requirement detail</div><dl class="kv">' +
+        "<dt>Comparator scenario</dt><dd>" +
+          esc((c.comparator_scenario || "not stated").replace(/_/g, " ")) + "</dd>" +
+        "<dt>Retain-all status</dt><dd>" + esc(c.retain_all_status.replace(/_/g, " ")) + "</dd>" +
+        "<dt>Recommendation strength</dt><dd>" +
+          esc((c.recommendation_strength || "not stated").replace(/_/g, " ")) + "</dd>" +
+        (c.atc_code ? "<dt>ATC code</dt><dd><span style='font-family:var(--ff-mono)'>" +
+          esc(c.atc_code) + "</span></dd>" : "") +
+      "</dl></div>";
+
+    openDetail(c.generic_name, c.class_or_mechanism || "Class not resolved", html,
+      "Suggested by MadeAI · every field above traces to the named sources.");
+  }
+
+  function showOutcome(category, i) {
+    var map = {
+      "Clinical effectiveness": "clinical_effectiveness", "Safety": "safety",
+      "Quality of life": "quality_of_life",
+      "Clinician / patient-reported outcomes (COA)": "clinician_patient_reported"
+    };
+    var o = state.output.outcomes[map[category]][i];
+    var sources = (o.sources || []).map(function (s) {
+      return "<div>" + tierBadges([s.tier]) + "<span>" + esc(s.display_name) + "</span></div>";
+    }).join("") || "<div><span class='note'>No sources recorded.</span></div>";
+
+    var html =
+      '<div><div class="sect-l">Why it is included</div>' +
+        '<p class="why">' + esc(o.rationale) + "</p></div>" +
+      '<div><div class="sect-l">Sources</div>' + sources + "</div>" +
+      '<div><div class="sect-l">Detail</div><dl class="kv">' +
+        "<dt>Category</dt><dd>" + esc(o.category) + "</dd>" +
+        "<dt>Unit of measurement</dt><dd>" + esc(o.unit_of_measurement) + "</dd>" +
+        (o.instrument ? "<dt>Instrument</dt><dd>" + esc(o.instrument) + "</dd>" : "") +
+        "<dt>Standard catalog</dt><dd>" + (o.listed
+            ? '<span class="flag ok">Listed</span> ' + esc(o.catalog_id)
+            : '<span class="flag warn">Unlisted</span> an outcome assessors expect that the ' +
+              "standard catalog does not carry") + "</dd>" +
+        "<dt>Requirement type</dt><dd>" +
+          esc((o.requirement_type || "reported result only").replace(/_/g, " ")) + "</dd>" +
+        (o.unit_disagreement_note ? "<dt>Unit disagreement</dt><dd>" +
+          esc(o.unit_disagreement_note) + "</dd>" : "") +
+      "</dl></div>";
+
+    openDetail(o.concept, o.category + " · " + o.unit_of_measurement, html,
+      "Suggested by MadeAI · applies across the whole scope.");
+  }
+
+  function openDetail(title, sub, html, foot) {
+    el("dlgTitle").textContent = title;
+    el("dlgSub").textContent = sub || "";
+    el("dlgBody").innerHTML = html;
+    el("dlgFoot").textContent = foot || "";
+    el("detailDialog").showModal();
+  }
+
+  /* ---------------------- manifest ---------------------- */
+  function showManifest() {
+    var m = (state.output && state.output.run_manifest) || {};
+    var sw = m.source_workbook || {};
+    var lg = m.leakage_guard || {};
+    var body =
+      '<div><div class="sect-l">Provenance</div><dl class="kv">' +
+        "<dt>Request</dt><dd><span style='font-family:var(--ff-mono)'>" +
+          esc(m.request_id || "—") + "</span></dd>" +
+        "<dt>Phase</dt><dd>Phase 1 — comparator &amp; outcome scoping" +
+          '<span class="flag neutral">PICO sets excluded</span></dd>' +
+        "<dt>Model</dt><dd>" + esc(m.model || "—") + "</dd>" +
+        "<dt>Outcome catalog</dt><dd>" + esc(m.outcome_catalog_version || "—") + "</dd>" +
+        "<dt>Therapeutic areas applied</dt><dd>" +
+          esc((m.therapeutic_areas_applied || []).join(", ") || "—") + "</dd>" +
+        "<dt>Duration</dt><dd>" + esc(m.duration_s == null ? "—" : m.duration_s + " s") + "</dd>" +
+      "</dl></div>" +
+
+      '<div><div class="sect-l">Source list of record</div><dl class="kv">' +
+        "<dt>Workbook</dt><dd style='word-break:break-all'>" + esc(sw.path || "—") + "</dd>" +
+        "<dt>Sheets matched</dt><dd>" +
+          esc(Object.keys(sw.sheets_matched || {}).map(function (k) {
+            return k + " → " + sw.sheets_matched[k]; }).join(" · ") || "—") + "</dd>" +
+        "<dt>Entries</dt><dd>" + esc(sw.entries || 0) + " URLs · " +
+          esc(sw.unique_domains || 0) + " unique domains</dd>" +
+      "</dl></div>" +
+
+      '<div><div class="sect-l">Leakage guard</div>' +
+        '<div class="banner info"><div>' +
+        (lg.allow_jca_reports
+          ? "<b>Sourcing from the JCA report.</b> The target drug's own published JCA " +
+            "report is a deliberate, labeled Tier 1 source for this run (per explicit " +
+            "SME decision) — comparators found there are tagged eu_jca_report, not " +
+            "blended silently into another source class."
+          : "<b>Blocked for this run.</b> The target drug's own published JCA report is " +
+            "excluded from the runtime path — anticipation-only mode, evaluating what " +
+            "the pipeline finds before that report exists.") +
+        "</div></div>" +
+        ((lg.blocked_urls || []).length
+          ? "<p class='note' style='margin-top:8px'>" + lg.blocked_urls.length +
+            " document(s) blocked this run.</p>" : "") +
+      "</div>" +
+
+      '<div><div class="sect-l">Prompt versions</div><div class="srclist">' +
+        Object.keys(m.prompt_versions || {}).map(function (k) {
+          return "<div><span style='font-family:var(--ff-mono); font-size:12px'>" +
+            esc(k) + "</span><span class='spacer'></span><span class='flag neutral'>" +
+            esc(m.prompt_versions[k]) + "</span></div>";
+        }).join("") + "</div></div>";
+    el("manifestBody").innerHTML = body;
+    el("manifestDialog").showModal();
+  }
+
+  /* ---------------------- navigation ---------------------- */
+  function go(n) {
+    el("screen-1").classList.toggle("hidden", n !== 1);
+    el("screen-2").classList.toggle("hidden", n !== 2);
+    el("tab-1").setAttribute("aria-current", n === 1 ? "step" : "false");
+    el("tab-2").setAttribute("aria-current", n === 2 ? "step" : "false");
+    el("tab-1").classList.toggle("done", n === 2);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+
+  /* ---------------------- wiring ---------------------- */
+  el("generateBtn").addEventListener("click", generate);
+  el("tab-1").addEventListener("click", function () { go(1); });
+  el("tab-2").addEventListener("click", function () {
+    if (!state.output) { state.output = EXAMPLE; state.live = false; renderScope(); }
+    go(2);
+  });
+  el("dlgClose").addEventListener("click", function () { el("detailDialog").close(); });
+  el("dlgDone").addEventListener("click", function () { el("detailDialog").close(); });
+  el("manClose").addEventListener("click", function () { el("manifestDialog").close(); });
+  el("manDone").addEventListener("click", function () { el("manifestDialog").close(); });
+  el("manifestBtn").addEventListener("click", function () {
+    if (!state.output) { state.output = EXAMPLE; renderScope(); }
+    showManifest();
+  });
+  el("viewByComparator").addEventListener("click", function () { setView("comparator"); });
+  el("viewByState").addEventListener("click", function () { setView("state"); });
+  function setView(v) {
+    state.view = v;
+    el("viewByComparator").setAttribute("aria-pressed", String(v === "comparator"));
+    el("viewByState").setAttribute("aria-pressed", String(v === "state"));
+    el("byComparatorView").classList.toggle("hidden", v !== "comparator");
+    el("byStateView").classList.toggle("hidden", v !== "state");
+  }
+  el("exportBtn").addEventListener("click", function () {
+    openDetail("Phase 1 output", "The object Phase 2 consumes",
+      "<pre style='font-family:var(--ff-mono); font-size:11.5px; white-space:pre-wrap; " +
+      "word-break:break-word; margin:0'>" +
+      esc(JSON.stringify(state.output, null, 1).slice(0, 6000)) + "\n…</pre>",
+      "pico_sets is null by design — Phase 2 produces it.");
+  });
+  el("handoffBtn").addEventListener("click", function () {
+    openDetail("Hand off to PICO sets", "Phase 2 — separate module",
+      '<div class="banner info"><div>This service produces the confirmed comparator and outcome ' +
+      "scope only. PICO-set generation is a separate Phase 2 implementation that consumes this " +
+      "output. Nothing in this run has assembled PICO sets, and the output object carries " +
+      "<b>pico_sets: null</b> so a consumer can never mistake absence for an error.</div></div>",
+      "Phase 1 complete.");
+  });
+  el("addComparatorBtn").addEventListener("click", function () {
+    openDetail("Add a comparator", "Taken exactly as entered",
+      '<div class="banner info"><div>A reviewer-added comparator needs a <b>drug name</b> and at ' +
+      "least one <b>Member State</b>. It is recorded exactly as entered — no validation, no " +
+      "enrichment, no scope adjudication. Your judgment replaces the pipeline's, and the entry " +
+      "is flagged <em>Added by reviewer</em> everywhere it appears.</div></div>" +
+      '<div class="field-row"><label for="nc-name">Drug name <span class="req">*</span></label>' +
+      '<input type="text" id="nc-name" placeholder="INN"></div>' +
+      '<div class="field-row"><label for="nc-states">Member States <span class="req">*</span></label>' +
+      '<input type="text" id="nc-states" placeholder="Germany, France"></div>' +
+      '<div class="field-row"><label for="nc-line">Line of therapy</label>' +
+      '<input type="text" id="nc-line" placeholder="Optional"></div>',
+      "POST /api/comparators");
+  });
+  el("addOutcomeBtn").addEventListener("click", function () {
+    openDetail("Add an outcome", "Taken exactly as entered",
+      '<div class="banner info"><div>An outcome you add is checked against the standard catalog ' +
+      "only to set its <em>listed / unlisted</em> flag. Everything else is recorded as you " +
+      "enter it.</div></div>" +
+      '<div class="field-row"><label for="no-name">Outcome <span class="req">*</span></label>' +
+      '<input type="text" id="no-name"></div>' +
+      '<div class="field-row"><label for="no-cat">Category <span class="req">*</span></label>' +
+      '<select id="no-cat"><option>Clinical Effectiveness</option><option>Safety</option>' +
+      "<option>Quality of Life</option>" +
+      "<option>Clinician / Patient-Reported Outcomes (COA)</option></select></div>" +
+      '<div class="field-row"><label for="no-unit">Unit of measurement</label>' +
+      '<input type="text" id="no-unit" placeholder="Optional"></div>',
+      "POST /api/outcomes");
+  });
+  el("themeBtn").addEventListener("click", function () {
+    var root = document.documentElement;
+    var cur = root.getAttribute("data-theme");
+    var next = cur === "dark" ? "light" : cur === "light" ? "dark" : "dark";
+    root.setAttribute("data-theme", next);
+  });
+
+  initScreen1();
+
+  /* =======================================================================
+     Bundled example output. Same shape the pipeline emits.
+     ======================================================================= */
+  function buildExample() {
+    function states(list) {
+      return MEMBER_STATES.map(function (m) {
+        var on = list.indexOf(m[0]) >= 0;
+        return {
+          member_state: m[0],
+          verdict: on ? "standard_of_care" : "not_established",
+          tier: on ? 1 : null,
+          reason: on ? "named by a source attributed to this Member State"
+                     : "this state's sources were searched and returned no state-specific evidence"
+        };
+      });
+    }
+    var topotecanStates = ["Germany", "France", "Italy", "Spain", "Netherlands",
+      "Belgium", "Austria", "Denmark", "Sweden", "Finland", "Ireland", "Poland"];
+    var platinumStates = ["Germany", "France", "Italy", "Netherlands", "Denmark", "Sweden"];
+    var cavStates = ["France", "Italy", "Spain"];
+
+    function src(id, name, tier, cls) {
+      return { source_id: id, display_name: name, tier: tier, source_class: cls, url: "" };
+    }
+
+    var comparators = [
+      {
+        generic_name: "Topotecan", comparator_id: "cmp-a", inn: "topotecan",
+        atc_code: "L01CE01", class_or_mechanism: "Topoisomerase I inhibitor",
+        class_source: "atc_vocabulary", is_combination: false,
+        indication: "Relapsed extensive-stage small cell lung cancer, second line following progression on platinum-based chemotherapy",
+        line_of_therapy: "Second line or later",
+        comparator_scenario: "at_least_one", retain_all_status: "unconfirmed",
+        recommendation_strength: "preferred",
+        member_states: topotecanStates, per_member_state: states(topotecanStates),
+        tiers: [1, 2], cross_tier_confirmed: true, or_alternative: true,
+        general_evidence_flag: false, origin: "agent_found",
+        rationale: "Positioned at second line following progression on platinum-based chemotherapy, and named as the appropriate comparator by twelve national bodies as well as the European guideline — the closest thing to a settled EU-wide answer for this population.",
+        scope_adjudication: {
+          verdict: "in_scope", decisive_facet: "line_of_therapy",
+          reason: "named as a second-line option for exactly the requested population",
+          evidence_for: [
+            { detail: "G-BA names topotecan as the appropriate comparator therapy for progression after platinum-based chemotherapy" },
+            { detail: "ESMO guideline recommends topotecan [I, A] in relapsed extensive-stage disease" }
+          ],
+          evidence_against: []
+        },
+        sources: [
+          src("s1", "G-BA — Nutzenbewertung", 1, "hta_regulatory"),
+          src("s2", "ESMO — SCLC Clinical Practice Guideline", 1, "clinical_guideline"),
+          src("s3", "EMA product label (EPAR)", 1, "drug_registry_label"),
+          src("s4", "ClinicalTrials.gov — NCT09999999 arm data", 2, "trial_registry")
+        ],
+        evidence: []
+      },
+      {
+        generic_name: "Platinum re-challenge (carboplatin or cisplatin + etoposide)",
+        comparator_id: "cmp-b", inn: "", atc_code: "",
+        class_or_mechanism: "Platinum agent + topoisomerase II inhibitor, re-induction",
+        class_source: "source_stated", is_combination: true,
+        indication: "Platinum-sensitive relapse with a chemotherapy-free interval of at least 90 days",
+        line_of_therapy: "Second line, platinum-sensitive relapse",
+        comparator_scenario: "at_least_one", retain_all_status: "unconfirmed",
+        recommendation_strength: "conditional_alternative",
+        member_states: platinumStates, per_member_state: states(platinumStates),
+        tiers: [1], cross_tier_confirmed: false, or_alternative: true,
+        general_evidence_flag: false, origin: "agent_found",
+        rationale: "Positioned at second line specifically for patients whose chemotherapy-free interval is at least 90 days — the interval, not the line alone, is what makes re-induction the relevant comparison here.",
+        scope_adjudication: {
+          verdict: "in_scope", decisive_facet: "treatment_free_interval",
+          reason: "the requested population states a chemotherapy-free interval of at least 90 days, which is the condition the guideline attaches to re-challenge",
+          evidence_for: [
+            { detail: "Guideline states re-challenge is a valid option for a chemotherapy-free interval of at least 90 days" }
+          ],
+          evidence_against: []
+        },
+        sources: [
+          src("s2", "ESMO — SCLC Clinical Practice Guideline", 1, "clinical_guideline"),
+          src("s5", "HAS — avis de la Commission de la Transparence", 1, "hta_regulatory")
+        ],
+        evidence: []
+      },
+      {
+        generic_name: "Cyclophosphamide + Doxorubicin + Vincristine",
+        comparator_id: "cmp-c", inn: "", atc_code: "",
+        class_or_mechanism: "Alkylating agent + anthracycline + vinca alkaloid combination",
+        class_source: "source_stated", is_combination: true,
+        indication: "Relapsed small cell lung cancer, alternative to topotecan",
+        line_of_therapy: "Second line or later",
+        comparator_scenario: "at_least_one", retain_all_status: "unconfirmed",
+        recommendation_strength: "conditional_alternative",
+        member_states: cavStates, per_member_state: states(cavStates),
+        tiers: [1, 2], cross_tier_confirmed: true, or_alternative: true,
+        general_evidence_flag: false, origin: "agent_found",
+        rationale: "Positioned at second line as a graded alternative to topotecan, and the option a guideline reaches for where myelosuppression is the limiting concern — found by the landscape search rather than by any query anchored to the assessed drug.",
+        scope_adjudication: {
+          verdict: "in_scope", decisive_facet: "line_of_therapy",
+          reason: "graded [II, B] as an alternative second-line option for this population",
+          evidence_for: [
+            { detail: "ESMO guideline grades CAV as an alternative option [II, B] in relapsed disease" }
+          ],
+          evidence_against: []
+        },
+        sources: [
+          src("s2", "ESMO — SCLC Clinical Practice Guideline", 1, "clinical_guideline"),
+          src("s6", "PubMed — practice guideline synthesis", 2, "pubmed")
+        ],
+        evidence: []
+      }
+    ];
+
+    var identified = {};
+    comparators.forEach(function (c) {
+      c.member_states.forEach(function (s) {
+        (identified[s] = identified[s] || []).push(c.generic_name);
+      });
+    });
+    var byState = MEMBER_STATES.map(function (m) {
+      var names = identified[m[0]] || [];
+      return {
+        member_state: m[0],
+        status: names.length ? "identified" : "not_identified",
+        comparators: names.sort(),
+        state_search_status: "complete",
+        finding: names.length ? "" : "No comparator is identified"
+      };
+    });
+
+    function outcome(concept, cat, unit, listed, catalogId, tiers, instrument, req, rationale) {
+      return {
+        concept: concept, category: cat, unit_of_measurement: unit, listed: listed,
+        catalog_id: catalogId, tiers: tiers, cross_tier_confirmed: tiers.length > 1,
+        instrument: instrument || "", requirement_type: req || "",
+        origin: "agent_found", rationale: rationale,
+        sources: [src("s1", "G-BA — Nutzenbewertung", 1, "hta_regulatory"),
+                  src("s2", "ESMO — SCLC Clinical Practice Guideline", 1, "clinical_guideline")]
+      };
+    }
+
+    var catalog = [
+      ["OS", "Overall survival", "Clinical Effectiveness", true],
+      ["PFS", "Progression-free survival", "Clinical Effectiveness", true],
+      ["ORR", "Objective response rate", "Clinical Effectiveness", true],
+      ["DCR", "Disease control rate", "Clinical Effectiveness", false],
+      ["AE_G3", "Grade >=3 adverse events", "Safety", true],
+      ["AE_DISC", "Discontinuation due to adverse events", "Safety", true],
+      ["AE_SERIOUS", "Serious adverse events", "Safety", true],
+      ["HRQOL_DISEASE", "Health-related quality of life (disease-specific)", "Quality of Life", true],
+      ["HEALTH_STATUS", "Generic health status", "Quality of Life", true],
+      ["PRO_SYMPTOM", "Patient-reported symptom burden", "Clinician / Patient-Reported Outcomes (COA)", true],
+      ["CLINRO_FUNCTION", "Clinician-reported functional status", "Clinician / Patient-Reported Outcomes (COA)", false]
+    ];
+
+    return {
+      request_id: "example-run",
+      populations: [{
+        population_id: "licensed",
+        fields: {
+          indication_disease: { value: PRESET.population.indication_disease, provenance: "confirmed" },
+          stage_severity: { value: PRESET.population.stage_severity, provenance: "confirmed" },
+          prior_therapy_line: { value: PRESET.population.prior_therapy_line, provenance: "confirmed" },
+          other_characteristics: { value: PRESET.population.other_characteristics, provenance: "confirmed" },
+          orphan_rare_disease: { value: "Yes", provenance: "confirmed" },
+          therapeutic_area: { value: "Oncology", provenance: "inferred",
+            inference_basis: "Small cell lung cancer is a thoracic malignancy" }
+        }
+      }],
+      scope_boundaries: [{
+        population_id: "licensed",
+        facets: {
+          indication_disease: { name: "indication_disease", value: PRESET.population.indication_disease,
+            provenance: "confirmed", must_match: true },
+          stage_severity: { name: "stage_severity", value: "Extensive-stage disease",
+            provenance: "confirmed", must_match: true },
+          prior_therapy_line: { name: "prior_therapy_line", value: PRESET.population.prior_therapy_line,
+            provenance: "confirmed", must_match: true },
+          line_of_therapy: { name: "line_of_therapy", value: "Second line or later",
+            provenance: "confirmed", must_match: true },
+          treatment_free_interval: { name: "treatment_free_interval",
+            value: "at least 90 days since the last platinum dose",
+            provenance: "confirmed", must_match: true },
+          age_group: { name: "age_group", value: "", provenance: "not_provided", must_match: false },
+          sex: { name: "sex", value: "", provenance: "not_provided", must_match: false },
+          molecular_biomarker_status: { name: "molecular_biomarker_status", value: "",
+            provenance: "not_provided", must_match: false },
+          performance_status: { name: "performance_status", value: "",
+            provenance: "not_provided", must_match: false }
+        },
+        unbounded_facets: ["age group", "sex", "molecular biomarker status", "performance status"]
+      }],
+      intervention: {
+        fields: {
+          product_name_inn: { value: PRESET.intervention.product_name_inn, provenance: "confirmed" },
+          therapeutic_class_mechanism: { value: PRESET.intervention.therapeutic_class_mechanism,
+            provenance: "confirmed" },
+          line_of_therapy: { value: PRESET.intervention.line_of_therapy, provenance: "confirmed" },
+          pivotal_trial_identifiers: { value: PRESET.intervention.pivotal_trial_identifiers,
+            provenance: "confirmed" },
+          claimed_indication_wording: { value: PRESET.intervention.claimed_indication_wording,
+            provenance: "confirmed" }
+        }
+      },
+      therapeutic_areas: { areas: ["Oncology", "Rare Diseases"], method: "keyword" },
+      comparators: comparators,
+      by_member_state: byState,
+      member_state_summary: {
+        identified_count: byState.filter(function (b) { return b.status === "identified"; }).length,
+        not_identified_count: byState.filter(function (b) { return b.status !== "identified"; }).length,
+        total: 27
+      },
+      outcomes: {
+        clinical_effectiveness: [
+          outcome("Overall survival", "Clinical Effectiveness", "Months, median (HR)", true, "OS",
+            [1, 2], "", "relative_effect_required",
+            "Required as a relative effect by the assessing body, and the endpoint that decides whether a response benefit means anything in a disease with this prognosis."),
+          outcome("Progression-free survival", "Clinical Effectiveness", "Months, median (HR)",
+            true, "PFS", [1, 2], "", "relative_effect_required",
+            "Required alongside survival because it separates delay of progression from post-progression effects in a setting where subsequent therapy is common."),
+          outcome("Objective response rate", "Clinical Effectiveness", "% of patients (RECIST 1.1)",
+            true, "ORR", [1, 2], "", "",
+            "Reported across the comparator evidence base, and the measure guidelines use when grading second-line options against one another.")
+        ],
+        safety: [
+          outcome("Grade >=3 adverse events", "Safety", "% of patients (CTCAE v5)", true, "AE_G3",
+            [1], "", "", "Carries particular weight here because myelosuppression is the concern that moves a guideline from one second-line option to another."),
+          outcome("Serious adverse events", "Safety", "% of patients", true, "AE_SERIOUS", [1], "", "",
+            "Required in the safety bucket assessors expect for this indication."),
+          outcome("Discontinuation due to adverse events", "Safety", "% of patients", true,
+            "AE_DISC", [1], "", "",
+            "Distinguishes tolerability from efficacy in a population where treatment is given until progression.")
+        ],
+        quality_of_life: [
+          outcome("Health-related quality of life (disease-specific)", "Quality of Life",
+            "Points, change from baseline", true, "HRQOL_DISEASE", [1],
+            "Disease-specific instrument as named by the source", "relative_effect_required",
+            "Explicitly required by the national body as a relative effect, measured with a disease-specific instrument rather than a generic one.")
+        ],
+        clinician_patient_reported: [
+          outcome("Patient-reported symptom burden", "Clinician / Patient-Reported Outcomes (COA)",
+            "Score, change from baseline", true, "PRO_SYMPTOM", [1],
+            "Validated instrument as named by the source", "relative_effect_required",
+            "Named in the guideline's own outcome set — symptom control is what a patient in this setting experiences as benefit.")
+        ],
+        catalog_coverage: catalog.map(function (c) {
+          return {
+            catalog_id: c[0], display_name: c[1], category: c[2],
+            status: c[3] ? "evidence_found" : "no_relevant_evidence_found",
+            detail: c[3] ? "" : "no source retrieved in this run stated this outcome"
+          };
+        })
+      },
+      validation: {
+        records_extracted: 63, grounded: 58, grounding_failed: 5,
+        claim_validated: 46, claim_rejected: 12, refetch_attempted: 58,
+        subject_drug_rejections: 4, role_rejections: 2,
+        scope_in: 3, scope_out: 2, scope_uncertain: 1,
+        excluded: [
+          { value: "Carboplatin + etoposide", stage: "scope_adjudication",
+            reason: "first-line induction backbone the patient received before reaching this population — treatment history, not a comparator for the second line" },
+          { value: "Atezolizumab", stage: "claim_validation",
+            reason: "the claim is about a different subject drug discussed in the same document, not the requested intervention" },
+          { value: "Amrubicin", stage: "scope_adjudication",
+            reason: "uncertain — a single source, and the population it describes could not be tied to the requested line of therapy. Surfaced rather than dropped." }
+        ]
+      },
+      completeness: {
+        member_states: { total: 27, searched: 27, with_findings: 12, no_findings: 15, search_failed: 0 },
+        assertions: [
+          { name: "by_member_state_has_27_entries", passed: true, detail: "found 27" },
+          { name: "member_state_summary_sums_to_27", passed: true, detail: "" },
+          { name: "every_comparator_has_grounded_evidence", passed: true, detail: "" },
+          { name: "no_comparator_carries_the_intervention_class", passed: true, detail: "" },
+          { name: "every_comparator_has_27_state_verdicts", passed: true, detail: "" },
+          { name: "all_catalog_outcomes_have_a_status", passed: true, detail: "" },
+          { name: "no_pico_sets_in_phase1_output", passed: true,
+            detail: "PICO-set generation is Phase 2 and is absent by design" }
+        ]
+      },
+      run_manifest: {
+        request_id: "example-run", phase2_included: false,
+        model: "anthropic.claude-sonnet-5", outcome_catalog_version: "madeai-11-v1",
+        therapeutic_areas_applied: ["Oncology", "Rare Diseases"], duration_s: 812.4,
+        source_workbook: {
+          path: "MadeAi_JCA_Source List 2.xlsx",
+          sheets_matched: { soc: "Standard of Care  Guidelines", hta: "HTA licensing sources",
+            emea: "EMEA licensing sources" },
+          entries: 340, unique_domains: 71
+        },
+        leakage_guard: { enabled: true, allow_jca_reports: false, blocked_urls: [] },
+        prompt_versions: {
+          "a01.pi_validation": "v1", "a02.input_structuring": "v1",
+          "a03.scope_facet_normalise": "v1", "a05.area_adjudication": "v1",
+          "a06.query_vocabulary": "v1", "a08.extraction": "v1",
+          "a10.claim_validation": "v1", "a11.comparator_identity": "v1",
+          "a12.scope_adjudication": "v1", "a14.outcome_harmonization": "v1",
+          "a16.comparator_rationale": "v1"
+        }
+      },
+      pico_sets: null,
+      pico_sets_note: "PICO-set generation is Phase 2 and is out of scope for this module."
+    };
+  }
+})();
+</script>

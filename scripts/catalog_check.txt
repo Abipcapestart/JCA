@@ -1,0 +1,42 @@
+=== Tovorafenib ===
+catalog coverage status counts: Counter({'no_relevant_evidence_found': 6, 'evidence_found': 5})
+   OS evidence_found
+   PFS evidence_found
+   ORR evidence_found
+   DCR evidence_found
+   AE_G3 no_relevant_evidence_found
+   AE_DISC no_relevant_evidence_found
+   AE_SERIOUS no_relevant_evidence_found
+   HRQOL_DISEASE evidence_found
+   HEALTH_STATUS no_relevant_evidence_found
+   PRO_SYMPTOM no_relevant_evidence_found
+   CLINRO_FUNCTION no_relevant_evidence_found
+
+=== Lurbinectedin ===
+catalog coverage status counts: Counter({'no_relevant_evidence_found': 9, 'evidence_found': 2})
+   OS evidence_found
+   PFS evidence_found
+   ORR no_relevant_evidence_found
+   DCR no_relevant_evidence_found
+   AE_G3 no_relevant_evidence_found
+   AE_DISC no_relevant_evidence_found
+   AE_SERIOUS no_relevant_evidence_found
+   HRQOL_DISEASE no_relevant_evidence_found
+   HEALTH_STATUS no_relevant_evidence_found
+   PRO_SYMPTOM no_relevant_evidence_found
+   CLINRO_FUNCTION no_relevant_evidence_found
+
+=== Tarlatamab ===
+catalog coverage status counts: Counter({'evidence_found': 7, 'no_relevant_evidence_found': 4})
+   OS evidence_found
+   PFS evidence_found
+   ORR evidence_found
+   DCR evidence_found
+   AE_G3 evidence_found
+   AE_DISC no_relevant_evidence_found
+   AE_SERIOUS evidence_found
+   HRQOL_DISEASE no_relevant_evidence_found
+   HEALTH_STATUS no_relevant_evidence_found
+   PRO_SYMPTOM evidence_found
+   CLINRO_FUNCTION no_relevant_evidence_found
+

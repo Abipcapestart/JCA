@@ -1,0 +1,83 @@
+{
+  "run_id": "RUN-20260921T061204-4753c8",
+  "mode": "full_workflow",
+  "component": null,
+  "status": "blocked",
+  "provider_mode": "production",
+  "prompt_versions_used": {
+    "a01.pi_validation": "base",
+    "a02.input_structuring": "base",
+    "a03.scope_facet_normalise": "base",
+    "a04.indication_lock": "base",
+    "a05.area_adjudication": "base",
+    "a06.query_vocabulary": "base",
+    "a08.extraction": "base",
+    "a10.claim_validation": "base",
+    "a11.comparator_identity": "base",
+    "a12.scope_adjudication": "base",
+    "a14.outcome_harmonization": "base",
+    "a16.comparator_rationale": "base",
+    "a16.indication_synthesis": "base",
+    "a16.outcome_rationale": "base"
+  },
+  "population_input": {
+    "indication_disease": "Paediatric low-grade glioma (LGG) harbouring a BRAF fusion or rearrangement, or BRAF V600 mutation",
+    "age_group": "6 months of age and older",
+    "stage_severity": "Relapsed/refractory \u2014 progressed after one or more prior systemic therapies",
+    "molecular_biomarker_status": "BRAF fusion or rearrangement, or BRAF V600 mutation (confirmed by CE-marked IVD or an alternative validated test prior to treatment)",
+    "prior_therapy_line": "Received one or more prior systemic therapies",
+    "itt_differs": "No, it differs",
+    "disease_subtype_histology": "Low-grade glioma (LGG), BRAF-altered",
+    "orphan_rare_disease": "Yes",
+    "therapeutic_area": "Oncology \u2014 solid tumours (paediatric neuro-oncology)"
+  },
+  "intervention_input": {
+    "product_name_inn": "Tovorafenib",
+    "therapeutic_class_mechanism": "Type II RAF kinase inhibitor of mutant BRAF V600E, wild-type BRAF, and wild-type CRAF kinases",
+    "route_of_administration": "Oral",
+    "dose": "380 mg/m\u00b2 (BSA-based) orally once weekly; maximum recommended dose 600 mg/week",
+    "dosing_schedule": "Once weekly, continuous, BSA-adjusted",
+    "treatment_duration": "Continue once weekly until disease progression, loss of clinical benefit, or unacceptable toxicity",
+    "line_of_therapy": "2L+ (after \u22651 prior systemic therapy)",
+    "product_modality": "Small molecule",
+    "regulatory_pathway": "Conditional marketing authorisation; orphan medicinal product; not first indication N/A (first indication = yes)",
+    "pharmaceutical_form_strength": "Powder for oral suspension and film-coated tablets (interchangeable)",
+    "companion_diagnostic": "Required \u2014 CE-marked IVD for BRAF fusion/rearrangement or BRAF V600 mutation; alternative validated test if CE-marked IVD unavailable",
+    "pivotal_trial_identifiers": "FIREFLY-1: NCT04775485 / EudraCT 2020-003657-30",
+    "claimed_indication_wording": "Tovorafenib is indicated as monotherapy for the treatment of patients 6 months of age and older with paediatric LGG harbouring a BRAF fusion or rearrangement, or BRAF V600 mutation, who have received one or more prior systemic therapies"
+  },
+  "started_at": "2026-09-21T06:12:04.715682+00:00",
+  "total_latency_s": 26.967,
+  "total_cost_usd": null,
+  "num_comparators": null,
+  "output": null,
+  "bedrock_calls": [],
+  "bedrock_summary": {},
+  "tavily_calls": [],
+  "tavily_summary": {},
+  "stage_latency_s": {},
+  "progress_log": [
+    {
+      "t": 0.0,
+      "stage": "A1",
+      "message": "Validating population and intervention fields"
+    }
+  ],
+  "debug_capture": {},
+  "error_log": [],
+  "error": "P&I validation returned blocking FIX items",
+  "input_validation": {
+    "overall_status": "BLOCKED",
+    "fix_items": [
+      {
+        "severity": "FIX",
+        "fields": [
+          "itt_differs"
+        ],
+        "value_flagged": "No, it differs",
+        "explanation": "This field should clearly state whether the treatment population matches the licensed population. The entry says both 'No' (implying it matches) and 'it differs' (implying it does not) in the same statement, which is contradictory and doesn't give a clear answer to the question asked."
+      }
+    ],
+    "check_items": []
+  }
+}

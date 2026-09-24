@@ -1,0 +1,99 @@
+=== A11 identity resolved (all candidate identities before grouping): 10 ===
+- "l'association du dabrafénib et du tramétinib" | inn='' | combo=True | components=['Dabrafenib', 'Trametinib']
+- 'carboplatin and vincristine (cv)' | inn='' | combo=True | components=['Carboplatin', 'Vincristine']
+- 'single agent vinblastine' | inn='vinblastine' | combo=False | components=[]
+- 'dabrafenib plus trametinib' | inn='' | combo=True | components=['Dabrafenib', 'Trametinib']
+- 'standard of care chemotherapy' | inn='' | combo=False | components=[]
+- 'standard of care (soc) chemotherapy' | inn='' | combo=False | components=[]
+- 'lasten onkologiaryhmä – vinkristiini/karboplatiini (cog-v/c) -hoito-ohjelma' | inn='' | combo=True | components=['Carboplatin', 'Vincristine']
+- 'kansainvälisen pediatrisen onkologiajärjestön hoito-ohjelma matala-asteiseen glioomaan, vinkristiini/karboplatiini (siope-lg-v/c)' | inn='' | combo=True | components=['Carboplatin', 'Vincristine']
+- 'vinblastiinin (vbl) hoito-ohjelma' | inn='vinblastine' | combo=False | components=[]
+- 'drug: tovorafenib' | inn='tovorafenib' | combo=False | components=[]
+
+=== A14 grouping (candidate groups fed to scope adjudication): 6 ===
+GROUP KEY: 'dabrafenib+trametinib' -- 4 record(s)
+    as_stated="l'association du dabrafénib et du tramétinib" role='prior_therapy' tier=1 member_state='France' source_class='hta_regulatory'
+    as_stated='dabrafenib plus trametinib' role='active_comparator' tier=1 member_state='EU-wide' source_class='drug_registry_label'
+GROUP KEY: 'carboplatin+vincristine' -- 3 record(s)
+    as_stated='carboplatin and vincristine (CV)' role='active_comparator' tier=1 member_state='EU-wide' source_class='drug_registry_label'
+    as_stated='Lasten onkologiaryhmä – vinkristiini/karboplatiini (COG-V/C) -hoito-ohjelma' role='active_comparator' tier=1 member_state='Finland' source_class='hta_regulatory'
+GROUP KEY: 'vinblastine' -- 2 record(s)
+    as_stated='single agent vinblastine' role='active_comparator' tier=1 member_state='EU-wide' source_class='drug_registry_label'
+    as_stated='vinblastiinin (VBL) hoito-ohjelma' role='active_comparator' tier=1 member_state='Finland' source_class='hta_regulatory'
+GROUP KEY: 'standard of care chemotherapy' -- 1 record(s)
+    as_stated='standard of care chemotherapy' role='active_comparator' tier=1 member_state='EU-wide' source_class='drug_registry_label'
+GROUP KEY: 'standard of care (soc) chemotherapy' -- 1 record(s)
+    as_stated='standard of care (SoC) chemotherapy' role='active_comparator' tier=1 member_state='EU-wide' source_class='drug_registry_label'
+GROUP KEY: 'tovorafenib' -- 6 record(s)
+    as_stated='Drug: Tovorafenib' role='unclear' tier=2 member_state='EU/general' source_class='trial_registry'
+    as_stated='Drug: Tovorafenib' role='unclear' tier=2 member_state='EU/general' source_class='trial_registry'
+
+=== A12 scope adjudication verdicts: 6 candidates ===
+- "l'association du dabrafénib et du tramétinib" [licensed] verdict=uncertain decisive_facet='' reason='adjudicator response could not be parsed; surfaced rather than dropped'
+- "l'association du dabrafénib et du tramétinib" [intended_to_treat] verdict=uncertain decisive_facet='line_of_therapy' reason='One EU label source explicitly frames dabrafenib+trametinib as an active comparator arm with efficacy data in relapsed/recurrent BRAF V600E LGG, while three other sources (including the same label and French HTA sources) describe it as prior therapy that patients must have failed or be ineligible for before receiving tovorafenib, creating a genuine conflict on whether it sits at the same line of therapy.'
+- 'carboplatin and vincristine (CV)' [licensed] verdict=out_of_scope decisive_facet='line_of_therapy' reason='All retrieved evidence positions carboplatin/vincristine as first-line systemic chemotherapy for paediatric LGG, not as a treatment for relapsed/refractory disease after prior systemic therapy as required by the request.'
+- 'carboplatin and vincristine (CV)' [intended_to_treat] verdict=out_of_scope decisive_facet='line_of_therapy' reason='All retrieved evidence describes carboplatin/vincristine as a first-line systemic therapy for paediatric LGG, not as a treatment for relapsed/refractory disease after prior systemic therapy as required by the request.'
+- 'single agent vinblastine' [licensed] verdict=out_of_scope decisive_facet='line_of_therapy' reason='Both retrieved sources describe single-agent vinblastine as a first-line systemic therapy option for paediatric LGG, not as a treatment for relapsed/refractory disease after ≥1 prior systemic therapy as required by the request.'
+- 'single agent vinblastine' [intended_to_treat] verdict=out_of_scope decisive_facet='line_of_therapy' reason='Both retrieved sources describe single agent vinblastine as a first-line systemic therapy option for paediatric LGG, not as a treatment for relapsed/refractory disease after prior systemic therapy as required by the request.'
+- 'standard of care chemotherapy' [licensed] verdict=out_of_scope decisive_facet='line_of_therapy' reason='The only evidence for standard of care chemotherapy as a comparator to tovorafenib is from the LOGGIC/FIREFLY-2 trial, which is explicitly a first-line setting for paediatric LGG requiring first-line systemic therapy, conflicting with the requested 2L+ relapsed/refractory population.'
+- 'standard of care chemotherapy' [intended_to_treat] verdict=out_of_scope decisive_facet='line_of_therapy' reason='The only evidence positions standard of care chemotherapy as a comparator to tovorafenib in the first-line setting (LOGGIC/FIREFLY-2), not in the relapsed/refractory 2L+ population requested.'
+- 'standard of care (SoC) chemotherapy' [licensed] verdict=out_of_scope decisive_facet='line_of_therapy' reason='The only evidence retrieved (FIREFLY-2 trial context) explicitly places SoC chemotherapy as a comparator in the first-line systemic therapy setting, conflicting with the requested relapsed/refractory 2L+ population.'
+- 'standard of care (SoC) chemotherapy' [intended_to_treat] verdict=out_of_scope decisive_facet='line_of_therapy' reason='The only evidence retrieved places SoC chemotherapy as a comparator to tovorafenib in the first-line setting (FIREFLY-2), whereas the requested population is relapsed/refractory 2L+ after prior systemic therapy.'
+- 'Drug: Tovorafenib' [licensed] verdict=in_scope decisive_facet='indication_disease' reason='Tovorafenib is the requested intervention itself, and trial evidence for recurrent/progressive low-grade glioma matches the requested population, making it a valid comparator (e.g., itself as an active arm or reference).'
+- 'Drug: Tovorafenib' [intended_to_treat] verdict=in_scope decisive_facet='disease_subtype_histology' reason='Tovorafenib is the requested intervention itself and the trial evidence shows it being used in recurrent/progressive low-grade glioma, matching the requested population.'
+
+=== validation.excluded (final, top-level): 54 ===
+- value="l'association du dabrafénib et du tramétinib" stage='claim_validation' reason="claim is about 'Tovorafénib (OJEMDA)', not the requested intervention 'Tovorafenib'"
+- value="l'association du dabrafénib et du tramétinib" stage='claim_validation' reason="claim is about 'tovorafénib (OJEMDA)', not the requested intervention 'Tovorafenib'"
+- value="il n'existe pas de traitement approprié" stage='claim_validation' reason="claim is about 'tovorafénib (OJEMDA)', not the requested intervention 'Tovorafenib'"
+- value='dabrafenib plus trametinib' stage='claim_validation' reason="claim is about 'Dabrafenib plus trametinib', not the requested intervention 'Tovorafenib'"
+- value='dabrafenib plus trametinib' stage='claim_validation' reason="claim is about 'Dabrafenib plus trametinib', not the requested intervention 'Tovorafenib'"
+- value='Chemotherapy' stage='claim_validation' reason="claim is about 'Chemotherapy (unspecified) / targeted therapy', not the requested intervention 'Tovorafenib'"
+- value='Standard of Care Chemotherapy' stage='claim_validation' reason='validator response could not be parsed; failed closed'
+- value='ORR, PFS, EFS' stage='claim_validation' reason='validator response could not be parsed; failed closed'
+- value='OS' stage='claim_validation' reason='validator response could not be parsed; failed closed'
+- value='Growth retardation (decrease in growth velocity, TEAE)' stage='claim_validation' reason='validator response could not be parsed; failed closed'
+- value='Intratumoral haemorrhage' stage='claim_validation' reason='validator response could not be parsed; failed closed'
+- value='chemotherapy' stage='claim_validation' reason="claim is about 'dabrafenib/trametinib (FINLEE/SPEXOTRAS)', not the requested intervention 'Tovorafenib'"
+- value='carboplatin plus vincristine chemotherapy' stage='claim_validation' reason="claim is about 'dabrafenib/trametinib (FINLEE/SPEXOTRAS)', not the requested intervention 'Tovorafenib'"
+- value='Progression-free survival (PFS), median' stage='claim_validation' reason='This PFS result is the trial outcome for dabrafenib/trametinib versus carboplatin/vincristine, not for tovorafenib.'
+- value='Progression-free survival (PFS), hazard ratio' stage='claim_validation' reason="The hazard ratio reported is for dabrafenib/trametinib's own trial, not for tovorafenib."
+- value='Overall survival' stage='claim_validation' reason='The lack of demonstrated OS improvement is stated for dabrafenib/trametinib, not tovorafenib.'
+- value='Quality of life' stage='claim_validation' reason="The quality-of-life evidence gap concerns dabrafenib/trametinib's own trial, not tovorafenib."
+- value='Overall response rate (ORR)' stage='claim_validation' reason='This ORR is from a dabrafenib/trametinib cohort in HGG, not tovorafenib, and also population is HGG not the requested LGG.'
+- value='Complete response rate' stage='claim_validation' reason='Complete response rate belongs to the dabrafenib/trametinib HGG cohort, not tovorafenib, and population is HGG not LGG.'
+- value='Median survival' stage='claim_validation' reason='Median survival figure is from the dabrafenib/trametinib HGG cohort, not tovorafenib, and population is HGG not LGG.'
+- value='Morbidity and mortality' stage='claim_validation' reason='The morbidity/mortality evidence gap is stated for dabrafenib/trametinib in HGG, not tovorafenib, and population is HGG not LGG.'
+- value='Duration of response' stage='claim_validation' reason='not grounded in the retrieved source text'
+- value='Dabrafenib combined with trametinib' stage='claim_validation' reason='The re-fetched source document could not be retrieved (only an error page is present), so there is no actual article text to confirm the quoted claim about dabrafenib/trametinib versus tovorafenib.'
+- value='dabrafenib, in combination with the MEK inhibitor, trametinib' stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value="current standard of care (SoC) chemotherapy / investigator's choice of prespecified SoC chemotherapy regimens" stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value='Objective response rate (ORR)' stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value='Objective response rate (ORR)' stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value='Progression-free survival' stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value='Duration of response' stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value='Safety' stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value='Neurologic function' stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value='Clinical benefit rate' stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value="l'association du dabrafénib et du tramétinib" stage='claim_validation' reason="claim is about 'tovorafénib', not the requested intervention 'Tovorafenib'"
+- value="l'association du dabrafénib et du tramétinib" stage='claim_validation' reason="claim is about 'tovorafénib (OJEMDA)', not the requested intervention 'Tovorafenib'"
+- value='Dabrafenib combined with trametinib' stage='claim_validation' reason='The re-fetched source document contains no retrievable content (only an error message stating the citation details could not be retrieved), so the quoted evidence cannot be verified against the actual source text.'
+- value='Finlee in associazione con trametinib' stage='claim_validation' reason="claim is about 'Dabrafenib in combination with trametinib (Finlee/Spexotras)', not the requested intervention 'Tovorafenib'"
+- value='carboplatin plus vincristine (C+V)' stage='claim_validation' reason="claim is about 'dabrafenib plus trametinib (D+T)', not the requested intervention 'Tovorafenib'"
+- value='overall response rate (ORR) by independent review based on RANO LGG (2017) criteria' stage='claim_validation' reason='The ORR data is for dabrafenib+trametinib vs carboplatin+vincristine, not for tovorafenib; the source does not mention tovorafenib at all.'
+- value='Duration of response (DOR)' stage='claim_validation' reason='The DOR data reported is specific to the dabrafenib+trametinib trial, not tovorafenib, which is never mentioned in the source.'
+- value='Progression-free survival (PFS)' stage='claim_validation' reason='The PFS data is from the dabrafenib+trametinib vs carboplatin+vincristine trial; tovorafenib is not the subject of this source.'
+- value='Overall survival (OS)' stage='claim_validation' reason='The OS interim analysis described belongs to the dabrafenib+trametinib trial, with no mention of tovorafenib anywhere in the source.'
+- value='dabrafenib in combination with trametinib' stage='claim_validation' reason="claim is about 'Dabrafenib plus trametinib', not the requested intervention 'Tovorafenib'"
+- value="current standard of care (SoC) chemotherapy / investigator's choice of prespecified SoC chemotherapy regimens" stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value='Objective response rate (ORR)' stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value='Objective response rate (ORR)' stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value='Progression-free survival' stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value='Duration of response' stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value='Safety' stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value='Neurologic function' stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value='Clinical benefit rate' stage='claim_validation' reason='source could not be re-opened: extract returned no results'
+- value='carboplatin and vincristine (CV)' stage='scope_adjudication' reason='licensed: All retrieved evidence positions carboplatin/vincristine as first-line systemic chemotherapy for paediatric LGG, not as a treatment for relapsed/refractory disease after prior systemic therapy as required by the request.; intended_to_treat: All retrieved evidence describes carboplatin/vincristine as a first-line systemic therapy for paediatric LGG, not as a treatment for relapsed/refractory disease after prior systemic therapy as required by the request.'
+- value='single agent vinblastine' stage='scope_adjudication' reason='licensed: Both retrieved sources describe single-agent vinblastine as a first-line systemic therapy option for paediatric LGG, not as a treatment for relapsed/refractory disease after ≥1 prior systemic therapy as required by the request.; intended_to_treat: Both retrieved sources describe single agent vinblastine as a first-line systemic therapy option for paediatric LGG, not as a treatment for relapsed/refractory disease after prior systemic therapy as required by the request.'
+- value='standard of care chemotherapy' stage='scope_adjudication' reason='licensed: The only evidence for standard of care chemotherapy as a comparator to tovorafenib is from the LOGGIC/FIREFLY-2 trial, which is explicitly a first-line setting for paediatric LGG requiring first-line systemic therapy, conflicting with the requested 2L+ relapsed/refractory population.; intended_to_treat: The only evidence positions standard of care chemotherapy as a comparator to tovorafenib in the first-line setting (LOGGIC/FIREFLY-2), not in the relapsed/refractory 2L+ population requested.'
+- value='standard of care (SoC) chemotherapy' stage='scope_adjudication' reason='licensed: The only evidence retrieved (FIREFLY-2 trial context) explicitly places SoC chemotherapy as a comparator in the first-line systemic therapy setting, conflicting with the requested relapsed/refractory 2L+ population.; intended_to_treat: The only evidence retrieved places SoC chemotherapy as a comparator to tovorafenib in the first-line setting (FIREFLY-2), whereas the requested population is relapsed/refractory 2L+ after prior systemic therapy.'

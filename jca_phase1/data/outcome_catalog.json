@@ -1,0 +1,106 @@
+{
+  "catalog_version": "madeai-11-v1",
+  "provenance": {
+    "source": "MadeAI JCA Ground Truth workbook, Overview sheet, row 'Outcomes mapping'",
+    "verbatim": "Each JCA outcome is matched to the closest item in the standard 11-outcome MadeAI catalog (Overall survival, PFS, ORR, Disease control rate, Grade>=3 AEs, Discontinuation due to AEs, Serious AEs, HRQoL disease-specific, Generic health status, Patient-reported symptom burden, Clinician-reported functional status). Outcomes with no direct catalog match are highlighted amber and labelled 'Additional / JCA-specific' - these represent outcomes the AI should surface as extra suggestions beyond the fixed catalog, or a signal the catalog needs extending for oncology JCAs.",
+    "evidence_label": "CONFIRMED FROM GT; corroborated by the mock UI, which renders exactly these 11 rows",
+    "IMPORTANT": "This catalog is NOT defined in the SME base prompt. The SME defines only the 4 categories and the listed/unlisted distinction, referring to 'a standard endpoint list' it never enumerates. This file is the MadeAI platform artifact that fills that reference. Treat it as data requiring Data Team sign-off, never as an SME requirement.",
+    "open_question": "SME CONFIRMATION REQUIRED: is coverage of all 11 a mandatory completeness check, and what should an item with no evidence render as?"
+  },
+  "items": [
+    {
+      "catalog_id": "OS",
+      "display_name": "Overall survival",
+      "category": "Clinical Effectiveness",
+      "synonyms": ["overall survival", "os", "median overall survival", "overall survival (os)", "survival"],
+      "expected_unit_hint": "Months, median (HR)",
+      "instrument": null
+    },
+    {
+      "catalog_id": "PFS",
+      "display_name": "Progression-free survival",
+      "category": "Clinical Effectiveness",
+      "synonyms": ["progression-free survival", "progression free survival", "pfs", "progression-free survival (pfs)"],
+      "expected_unit_hint": "Months, median (HR)",
+      "instrument": null
+    },
+    {
+      "catalog_id": "ORR",
+      "display_name": "Objective response rate",
+      "category": "Clinical Effectiveness",
+      "synonyms": ["objective response rate", "orr", "overall response rate", "objective response", "response rate"],
+      "expected_unit_hint": "% of patients",
+      "instrument": null
+    },
+    {
+      "catalog_id": "DCR",
+      "display_name": "Disease control rate",
+      "category": "Clinical Effectiveness",
+      "synonyms": ["disease control rate", "dcr", "disease control", "clinical benefit rate"],
+      "expected_unit_hint": "% of patients",
+      "instrument": null
+    },
+    {
+      "catalog_id": "AE_G3",
+      "display_name": "Grade >=3 adverse events",
+      "category": "Safety",
+      "synonyms": ["grade >=3 adverse events", "grade 3 or higher adverse events", "severe adverse event",
+                   "grade >=3 treatment-related adverse events", "grade 3+ adverse events", "ctcae grade 3"],
+      "expected_unit_hint": "% of patients (CTCAE)",
+      "instrument": null
+    },
+    {
+      "catalog_id": "AE_DISC",
+      "display_name": "Discontinuation due to adverse events",
+      "category": "Safety",
+      "synonyms": ["discontinuation due to adverse events", "treatment discontinuation due to adverse event",
+                   "discontinuation due to ae", "withdrawal due to adverse events"],
+      "expected_unit_hint": "% of patients",
+      "instrument": null
+    },
+    {
+      "catalog_id": "AE_SERIOUS",
+      "display_name": "Serious adverse events",
+      "category": "Safety",
+      "synonyms": ["serious adverse events", "serious adverse event", "sae", "serious adverse reactions"],
+      "expected_unit_hint": "% of patients",
+      "instrument": null
+    },
+    {
+      "catalog_id": "HRQOL_DISEASE",
+      "display_name": "Health-related quality of life (disease-specific)",
+      "category": "Quality of Life",
+      "synonyms": ["health-related quality of life, disease-specific", "disease-specific quality of life",
+                   "hrqol disease-specific", "eortc qlq-c30", "eortc qlq", "qlq-c30", "qlq-lc13"],
+      "expected_unit_hint": "Points, change from baseline",
+      "instrument": "Disease-specific instrument as named by the source (e.g. EORTC QLQ-C30 + module)"
+    },
+    {
+      "catalog_id": "HEALTH_STATUS",
+      "display_name": "Generic health status",
+      "category": "Quality of Life",
+      "synonyms": ["generic health status", "health status", "health-related quality of life, generic",
+                   "generic quality of life", "eq-5d", "sf-36", "utility index"],
+      "expected_unit_hint": "Index score, 0-1 (utility)",
+      "instrument": "Generic instrument as named by the source (e.g. EQ-5D, SF-36)"
+    },
+    {
+      "catalog_id": "PRO_SYMPTOM",
+      "display_name": "Patient-reported symptom burden",
+      "category": "Clinician / Patient-Reported Outcomes (COA)",
+      "synonyms": ["patient-reported symptom burden", "patient-reported outcomes", "symptoms of the disease",
+                   "symptom burden", "patient reported symptoms", "pro"],
+      "expected_unit_hint": "Score, change from baseline",
+      "instrument": "Validated instrument as named by the source"
+    },
+    {
+      "catalog_id": "CLINRO_FUNCTION",
+      "display_name": "Clinician-reported functional status",
+      "category": "Clinician / Patient-Reported Outcomes (COA)",
+      "synonyms": ["clinician-reported functional status", "clinician-reported outcome", "functional status",
+                   "clinro", "performance status change"],
+      "expected_unit_hint": "Grade, ordinal scale",
+      "instrument": "Validated instrument as named by the source"
+    }
+  ]
+}

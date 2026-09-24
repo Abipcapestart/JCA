@@ -1,0 +1,29 @@
+{
+  "vocabulary_version": "seed-v1",
+  "provenance": "SEED ONLY. Substances here come from the SME base prompt's own worked examples plus common oncology comparators, so the deterministic path can be exercised and tested. THIS IS NOT A SUBSTITUTE FOR A REAL VOCABULARY. Before production, replace with a licensed INN/ATC source (WHO INN cumulative list, WHOCC ATC index, or RxNorm) loaded from a versioned file and recorded in the run manifest. A comparator whose INN is not in the vocabulary falls through to the LLM resolver and is marked class_source='unresolved' rather than being guessed.",
+  "substances": [
+    {"inn": "gefitinib", "atc": "L01EB01", "class_mechanism": "EGFR tyrosine kinase inhibitor", "brand_names": ["Iressa", "Gefticip"], "aliases": []},
+    {"inn": "osimertinib", "atc": "L01EB04", "class_mechanism": "third-generation EGFR tyrosine kinase inhibitor", "brand_names": ["Tagrisso"], "aliases": []},
+    {"inn": "erlotinib", "atc": "L01EB02", "class_mechanism": "EGFR tyrosine kinase inhibitor", "brand_names": ["Tarceva"], "aliases": []},
+    {"inn": "afatinib", "atc": "L01EB03", "class_mechanism": "irreversible ErbB-family tyrosine kinase inhibitor", "brand_names": ["Giotrif"], "aliases": []},
+    {"inn": "topotecan", "atc": "L01CE01", "class_mechanism": "topoisomerase I inhibitor", "brand_names": ["Hycamtin"], "aliases": []},
+    {"inn": "lurbinectedin", "atc": "L01XX70", "class_mechanism": "selective inhibitor of oncogenic transcription", "brand_names": ["Zepzelca"], "aliases": []},
+    {"inn": "atezolizumab", "atc": "L01FF05", "class_mechanism": "anti-PD-L1 monoclonal antibody", "brand_names": ["Tecentriq"], "aliases": []},
+    {"inn": "amrubicin", "atc": "L01DB10", "class_mechanism": "anthracycline topoisomerase II inhibitor", "brand_names": ["Calsed"], "aliases": []},
+    {"inn": "carboplatin", "atc": "L01XA02", "class_mechanism": "platinum-based alkylating agent", "brand_names": ["Paraplatin"], "aliases": []},
+    {"inn": "cisplatin", "atc": "L01XA01", "class_mechanism": "platinum-based alkylating agent", "brand_names": ["Platinol"], "aliases": []},
+    {"inn": "etoposide", "atc": "L01CB01", "class_mechanism": "topoisomerase II inhibitor", "brand_names": ["Vepesid"], "aliases": []},
+    {"inn": "cyclophosphamide", "atc": "L01AA01", "class_mechanism": "nitrogen-mustard alkylating agent", "brand_names": ["Endoxan"], "aliases": []},
+    {"inn": "doxorubicin", "atc": "L01DB01", "class_mechanism": "anthracycline topoisomerase II inhibitor", "brand_names": ["Adriamycin"], "aliases": []},
+    {"inn": "vincristine", "atc": "L01CA02", "class_mechanism": "vinca alkaloid microtubule inhibitor", "brand_names": ["Oncovin"], "aliases": []},
+    {"inn": "vinblastine", "atc": "L01CA01", "class_mechanism": "vinca alkaloid microtubule inhibitor", "brand_names": ["Velbe"], "aliases": []},
+    {"inn": "irinotecan", "atc": "L01CE02", "class_mechanism": "topoisomerase I inhibitor", "brand_names": ["Campto"], "aliases": []},
+    {"inn": "dabrafenib", "atc": "L01EC02", "class_mechanism": "BRAF kinase inhibitor", "brand_names": ["Tafinlar", "Finlee"], "aliases": []},
+    {"inn": "trametinib", "atc": "L01EE01", "class_mechanism": "MEK1/MEK2 kinase inhibitor", "brand_names": ["Mekinist", "Spexotras"], "aliases": []},
+    {"inn": "everolimus", "atc": "L01EG02", "class_mechanism": "mTOR inhibitor", "brand_names": ["Afinitor", "Votubia"], "aliases": []},
+    {"inn": "bevacizumab", "atc": "L01FG01", "class_mechanism": "anti-VEGF monoclonal antibody", "brand_names": ["Avastin"], "aliases": []},
+    {"inn": "sorafenib", "atc": "L01EX02", "class_mechanism": "oral multi-target kinase inhibitor", "brand_names": ["Nexavar"], "aliases": []},
+    {"inn": "lenvatinib", "atc": "L01EX08", "class_mechanism": "oral multi-target kinase inhibitor", "brand_names": ["Lenvima", "Kisplyx"], "aliases": []},
+    {"inn": "best supportive care", "atc": "", "class_mechanism": "symptom management, no disease-directed systemic therapy", "brand_names": [], "aliases": ["bsc", "supportive care alone"]}
+  ]
+}

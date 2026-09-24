@@ -1,0 +1,14 @@
+# Core (the loader and the schema need only this)
+openpyxl>=3.1
+python-dotenv>=1.0   # loads .env for local/production runs
+
+# Production providers
+boto3>=1.34.116      # Bedrock; floor needed for Anthropic prompt-caching (cache_control)
+                      # support in invoke_model
+tavily-python>=0.5   # search + extract
+requests>=2.31       # ClinicalTrials.gov v2, PubMed E-utilities
+
+# Optional: FastAPI deployment. The stdlib dev server needs none of this.
+fastapi>=0.110
+uvicorn>=0.27
+streamlit

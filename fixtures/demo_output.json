@@ -1,0 +1,2640 @@
+{
+ "request_id": "demo-run",
+ "created_at": "2026-09-15T08:37:51.246839+00:00",
+ "input_validation": {
+  "overall_status": "PASS",
+  "fix_items": [],
+  "check_items": []
+ },
+ "raw_population_input": {
+  "indication_disease": "Extensive-stage small cell lung cancer",
+  "stage_severity": "Extensive-stage disease",
+  "prior_therapy_line": "Progressed on or after first-line platinum-based chemotherapy",
+  "age_group": "Adults",
+  "orphan_rare_disease": "Yes",
+  "treatment_setting_intent": "Palliative, second line or later",
+  "other_characteristics": "Chemotherapy-free interval of at least 90 days since the last platinum dose"
+ },
+ "raw_intervention_input": {
+  "product_name_inn": "Examplimab",
+  "line_of_therapy": "Second line or later",
+  "therapeutic_class_mechanism": "Bispecific T-cell engager",
+  "claimed_indication_wording": "Monotherapy for the treatment of adult patients with extensive-stage small cell lung cancer who require systemic therapy following progression on or after platinum-based chemotherapy",
+  "pivotal_trial_identifiers": "NCT09999999"
+ },
+ "populations": [
+  {
+   "population_id": "licensed",
+   "fields": {
+    "indication_disease": {
+     "value": "Extensive-stage small cell lung cancer",
+     "provenance": "confirmed",
+     "inference_basis": "",
+     "label": "Indication / disease"
+    },
+    "age_group": {
+     "value": "Adults",
+     "provenance": "confirmed",
+     "inference_basis": "",
+     "label": "Age group"
+    },
+    "sex": {
+     "value": null,
+     "provenance": "not_provided",
+     "inference_basis": "",
+     "label": "Sex"
+    },
+    "stage_severity": {
+     "value": "Extensive-stage disease",
+     "provenance": "confirmed",
+     "inference_basis": "",
+     "label": "Stage / severity"
+    },
+    "molecular_biomarker_status": {
+     "value": null,
+     "provenance": "not_provided",
+     "inference_basis": "",
+     "label": "Molecular / biomarker status"
+    },
+    "prior_therapy_line": {
+     "value": "Progressed on or after first-line platinum-based chemotherapy",
+     "provenance": "confirmed",
+     "inference_basis": "",
+     "label": "Prior therapy / line"
+    },
+    "performance_status": {
+     "value": null,
+     "provenance": "not_provided",
+     "inference_basis": "",
+     "label": "Performance status"
+    },
+    "other_characteristics": {
+     "value": "Chemotherapy-free interval of at least 90 days since the last platinum dose",
+     "provenance": "confirmed",
+     "inference_basis": "",
+     "label": "Other characteristics"
+    },
+    "itt_differs": {
+     "value": null,
+     "provenance": "not_provided",
+     "inference_basis": "",
+     "label": "Is the intended-to-treat population the same?"
+    },
+    "disease_subtype_histology": {
+     "value": null,
+     "provenance": "not_provided",
+     "inference_basis": "",
+     "label": "Disease subtype / histology"
+    },
+    "icd_disease_code": {
+     "value": null,
+     "provenance": "not_provided",
+     "inference_basis": "",
+     "label": "ICD disease code"
+    },
+    "organ_function_comorbidity": {
+     "value": null,
+     "provenance": "not_provided",
+     "inference_basis": "",
+     "label": "Key organ function / comorbidity"
+    },
+    "orphan_rare_disease": {
+     "value": "Yes",
+     "provenance": "confirmed",
+     "inference_basis": "",
+     "label": "Orphan / rare-disease"
+    },
+    "therapeutic_area": {
+     "value": null,
+     "provenance": "not_provided",
+     "inference_basis": "",
+     "label": "Therapeutic area"
+    },
+    "treatment_setting_intent": {
+     "value": "Palliative, second line or later",
+     "provenance": "confirmed",
+     "inference_basis": "",
+     "label": "Treatment setting / intent"
+    }
+   },
+   "custom_fields": [],
+   "user_confirmed": false,
+   "confirmed_at": "",
+   "confirmed_by": ""
+  }
+ ],
+ "scope_boundaries": [
+  {
+   "population_id": "licensed",
+   "facets": {
+    "indication_disease": {
+     "name": "indication_disease",
+     "value": "Extensive-stage small cell lung cancer",
+     "provenance": "confirmed",
+     "must_match": true,
+     "verbatim": "Extensive-stage small cell lung cancer"
+    },
+    "age_group": {
+     "name": "age_group",
+     "value": "Adults",
+     "provenance": "confirmed",
+     "must_match": false,
+     "verbatim": "Adults"
+    },
+    "sex": {
+     "name": "sex",
+     "value": "",
+     "provenance": "not_provided",
+     "must_match": false,
+     "verbatim": ""
+    },
+    "stage_severity": {
+     "name": "stage_severity",
+     "value": "Extensive-stage disease",
+     "provenance": "confirmed",
+     "must_match": true,
+     "verbatim": "Extensive-stage disease"
+    },
+    "molecular_biomarker_status": {
+     "name": "molecular_biomarker_status",
+     "value": "",
+     "provenance": "not_provided",
+     "must_match": false,
+     "verbatim": ""
+    },
+    "prior_therapy_line": {
+     "name": "prior_therapy_line",
+     "value": "Progressed on or after first-line platinum-based chemotherapy",
+     "provenance": "confirmed",
+     "must_match": true,
+     "verbatim": "Progressed on or after first-line platinum-based chemotherapy"
+    },
+    "performance_status": {
+     "name": "performance_status",
+     "value": "",
+     "provenance": "not_provided",
+     "must_match": false,
+     "verbatim": ""
+    },
+    "other_characteristics": {
+     "name": "other_characteristics",
+     "value": "Chemotherapy-free interval of at least 90 days since the last platinum dose",
+     "provenance": "confirmed",
+     "must_match": false,
+     "verbatim": "Chemotherapy-free interval of at least 90 days since the last platinum dose"
+    },
+    "disease_subtype_histology": {
+     "name": "disease_subtype_histology",
+     "value": "",
+     "provenance": "not_provided",
+     "must_match": false,
+     "verbatim": ""
+    },
+    "organ_function_comorbidity": {
+     "name": "organ_function_comorbidity",
+     "value": "",
+     "provenance": "not_provided",
+     "must_match": false,
+     "verbatim": ""
+    },
+    "treatment_setting_intent": {
+     "name": "treatment_setting_intent",
+     "value": "Palliative, second line or later",
+     "provenance": "confirmed",
+     "must_match": true,
+     "verbatim": "Palliative, second line or later"
+    },
+    "line_of_therapy": {
+     "name": "line_of_therapy",
+     "value": "Second line or later",
+     "provenance": "confirmed",
+     "must_match": true,
+     "verbatim": "Second line or later"
+    },
+    "treatment_free_interval": {
+     "name": "treatment_free_interval",
+     "value": "at least 90 days since the last platinum dose",
+     "provenance": "confirmed",
+     "must_match": true,
+     "verbatim": "Chemotherapy-free interval of at least 90 days since the last platinum dose"
+    },
+    "recurrence_free_interval": {
+     "name": "recurrence_free_interval",
+     "value": "",
+     "provenance": "not_provided",
+     "must_match": false,
+     "verbatim": ""
+    }
+   },
+   "licensed_indication_wording": "Monotherapy for the treatment of adult patients with extensive-stage small cell lung cancer who require systemic therapy following progression on or after platinum-based chemotherapy",
+   "out_of_bounds_rule": "reject",
+   "unbounded_facets": [
+    "disease_subtype_histology",
+    "molecular_biomarker_status",
+    "organ_function_comorbidity",
+    "performance_status",
+    "recurrence_free_interval",
+    "sex"
+   ]
+  }
+ ],
+ "intervention": {
+  "fields": {
+   "product_name_inn": {
+    "value": "Examplimab",
+    "provenance": "confirmed",
+    "inference_basis": "",
+    "label": "Product name (INN)"
+   },
+   "therapeutic_class_mechanism": {
+    "value": "Bispecific T-cell engager",
+    "provenance": "confirmed",
+    "inference_basis": "",
+    "label": "Therapeutic class / mechanism"
+   },
+   "generic_name": {
+    "value": null,
+    "provenance": "not_provided",
+    "inference_basis": "",
+    "label": "Generic name"
+   },
+   "route_of_administration": {
+    "value": null,
+    "provenance": "not_provided",
+    "inference_basis": "",
+    "label": "Route of administration"
+   },
+   "dose": {
+    "value": null,
+    "provenance": "not_provided",
+    "inference_basis": "",
+    "label": "Dose(s)"
+   },
+   "dosing_schedule": {
+    "value": null,
+    "provenance": "not_provided",
+    "inference_basis": "",
+    "label": "Dosing schedule"
+   },
+   "treatment_duration": {
+    "value": null,
+    "provenance": "not_provided",
+    "inference_basis": "",
+    "label": "Treatment duration"
+   },
+   "line_of_therapy": {
+    "value": "Second line or later",
+    "provenance": "confirmed",
+    "inference_basis": "",
+    "label": "Line of therapy"
+   },
+   "product_modality": {
+    "value": null,
+    "provenance": "not_provided",
+    "inference_basis": "",
+    "label": "Product modality / type"
+   },
+   "regulatory_pathway": {
+    "value": null,
+    "provenance": "not_provided",
+    "inference_basis": "",
+    "label": "MA type / regulatory pathway"
+   },
+   "pharmaceutical_form_strength": {
+    "value": null,
+    "provenance": "not_provided",
+    "inference_basis": "",
+    "label": "Pharmaceutical form / strength"
+   },
+   "companion_diagnostic": {
+    "value": null,
+    "provenance": "not_provided",
+    "inference_basis": "",
+    "label": "Companion diagnostic"
+   },
+   "pivotal_trial_identifiers": {
+    "value": "NCT09999999",
+    "provenance": "confirmed",
+    "inference_basis": "",
+    "label": "Pivotal trial identifier(s)"
+   },
+   "claimed_indication_wording": {
+    "value": "Monotherapy for the treatment of adult patients with extensive-stage small cell lung cancer who require systemic therapy following progression on or after platinum-based chemotherapy",
+    "provenance": "confirmed",
+    "inference_basis": "",
+    "label": "Claimed / anticipated indication wording"
+   }
+  },
+  "custom_fields": [],
+  "inn_resolved": "Examplimab",
+  "atc_code": "L01FX99",
+  "user_confirmed": false
+ },
+ "licensed_indication_record": {
+  "source": "ema_smpc",
+  "indication_text": "Monotherapy for the treatment of adult patients with extensive-stage small cell lung cancer who require systemic therapy following progression on or after platinum-based chemotherapy",
+  "source_url": "https://ema.europa.eu/en/medicines/human/EPAR/examplimab",
+  "retrieved_at": "",
+  "pivotal_trials": [
+   "NCT09999999"
+  ],
+  "atc_code": "L01FX99",
+  "inn": "Examplimab",
+  "notes": ""
+ },
+ "therapeutic_areas": {
+  "areas": [
+   "Oncology",
+   "Rare Diseases"
+  ],
+  "rationales": {
+   "Oncology": "Deterministic keyword match on the indication."
+  },
+  "method": "keyword",
+  "needed_adjudication": false
+ },
+ "comparators": [
+  {
+   "generic_name": "Topotecan",
+   "comparator_id": "cmp-414a465db3",
+   "brand_names": [],
+   "inn": "topotecan",
+   "atc_code": "L01CE01",
+   "class_or_mechanism": "topoisomerase I inhibitor",
+   "class_source": "atc_vocabulary",
+   "is_combination": false,
+   "components": [
+    "topotecan"
+   ],
+   "role": "active_comparator",
+   "indication": "Extensive-stage small cell lung cancer, second line or later following progression on platinum-based chemotherapy",
+   "indication_scope_note": "",
+   "line_of_therapy": "second-line",
+   "comparator_scenario": "at_least_one",
+   "retain_all_status": "unconfirmed",
+   "recommendation_strength": "preferred",
+   "member_states": [
+    "Germany"
+   ],
+   "member_state_count": 1,
+   "per_member_state": [
+    {
+     "member_state": "Austria",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Belgium",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Bulgaria",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Croatia",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Cyprus",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Czech Republic",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Denmark",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Estonia",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Finland",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "France",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Germany",
+     "verdict": "standard_of_care",
+     "tier": 1,
+     "source_id": "src-5a3d133da34d",
+     "source_url": "https://g-ba.de/bewertungsverfahren/examplimab",
+     "evidence_quote": "The appropriate comparator therapy determined by the G-BA for this population is topotecan",
+     "reason": "named by a source attributed to this Member State"
+    },
+    {
+     "member_state": "Greece",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Hungary",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Ireland",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Italy",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Latvia",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Lithuania",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Luxembourg",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Malta",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Netherlands",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Poland",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Portugal",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Romania",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Slovakia",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Slovenia",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Spain",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Sweden",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    }
+   ],
+   "tiers": [
+    1,
+    2
+   ],
+   "cross_tier_confirmed": true,
+   "or_alternative": false,
+   "general_evidence_flag": false,
+   "rationale": "Positioned at second line or later; named as a recommended option for patients who have progressed after first-line platinum-based chemotherapy.",
+   "scope_adjudication": {
+    "comparator_inn": "topotecan",
+    "verdict": "in_scope",
+    "evidence_for": [],
+    "evidence_against": [],
+    "decisive_facet": "line_of_therapy",
+    "reason": "named as a second-line option for this population",
+    "adjudicator_version": "a12.scope_adjudication/v1"
+   },
+   "origin": "agent_found",
+   "sources": [
+    {
+     "source_id": "src-ef429691c41f",
+     "display_name": "Clinical guideline (esmo.org)",
+     "url": "https://esmo.org/guidelines/lung-and-chest-tumours/small-cell-lung-cancer",
+     "tier": 1,
+     "source_class": "clinical_guideline",
+     "organization": "",
+     "document_title": "",
+     "document_date": "",
+     "language": "en"
+    },
+    {
+     "source_id": "src-5a3d133da34d",
+     "display_name": "National HTA report (g-ba.de)",
+     "url": "https://g-ba.de/bewertungsverfahren/examplimab",
+     "tier": 1,
+     "source_class": "hta_regulatory",
+     "organization": "",
+     "document_title": "",
+     "document_date": "",
+     "language": "en"
+    },
+    {
+     "source_id": "src-4d18d7f7da82",
+     "display_name": "EMA product label (EPAR) (ema.europa.eu)",
+     "url": "https://ema.europa.eu/en/medicines/human/EPAR/examplimab",
+     "tier": 1,
+     "source_class": "drug_registry_label",
+     "organization": "",
+     "document_title": "",
+     "document_date": "",
+     "language": "en"
+    },
+    {
+     "source_id": "trial-NCT09999999",
+     "display_name": "clinicaltrials.gov \u2014 Examplimab versus topotecan in relapsed ES-SCLC",
+     "url": "https://clinicaltrials.gov/study/NCT09999999",
+     "tier": 2,
+     "source_class": "trial_registry",
+     "organization": "clinicaltrials.gov",
+     "document_title": "Examplimab versus topotecan in relapsed ES-SCLC",
+     "document_date": "",
+     "language": "en"
+    }
+   ],
+   "evidence": [
+    {
+     "source_id": "src-ef429691c41f",
+     "quote": "topotecan remains a recommended option [I, A]",
+     "locator": "",
+     "member_state": "EU/general",
+     "grounded": true,
+     "validation_verdict": "SUPPORTED",
+     "refetched": true
+    },
+    {
+     "source_id": "src-5a3d133da34d",
+     "quote": "The appropriate comparator therapy determined by the G-BA for this population is topotecan",
+     "locator": "Zweckmaessige Vergleichstherapie",
+     "member_state": "Germany",
+     "grounded": true,
+     "validation_verdict": "SUPPORTED",
+     "refetched": true
+    },
+    {
+     "source_id": "src-4d18d7f7da82",
+     "quote": "randomised patients with extensive-stage SCLC who had progressed after first-line platinum-based chemotherapy to examplimab or to topotecan",
+     "locator": "",
+     "member_state": "EU-wide",
+     "grounded": true,
+     "validation_verdict": "SUPPORTED",
+     "refetched": true
+    }
+   ]
+  },
+  {
+   "generic_name": "CAV (cyclophosphamide, doxorubicin and vincristine)",
+   "comparator_id": "cmp-7950d148e5",
+   "brand_names": [],
+   "inn": "",
+   "atc_code": "",
+   "class_or_mechanism": "alkylating agent + anthracycline + vinca alkaloid combination",
+   "class_source": "source_stated",
+   "is_combination": true,
+   "components": [
+    "cyclophosphamide",
+    "doxorubicin",
+    "vincristine"
+   ],
+   "role": "active_comparator",
+   "indication": "relapsed extensive-stage small cell lung cancer, second-line",
+   "indication_scope_note": "",
+   "line_of_therapy": "second-line",
+   "comparator_scenario": "at_least_one",
+   "retain_all_status": "unconfirmed",
+   "recommendation_strength": "conditional_alternative",
+   "member_states": [],
+   "member_state_count": 0,
+   "per_member_state": [
+    {
+     "member_state": "Austria",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Belgium",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Bulgaria",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Croatia",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Cyprus",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Czech Republic",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Denmark",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Estonia",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Finland",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "France",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Germany",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Greece",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Hungary",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Ireland",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Italy",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Latvia",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Lithuania",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Luxembourg",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Malta",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Netherlands",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Poland",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Portugal",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Romania",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Slovakia",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Slovenia",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Spain",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    },
+    {
+     "member_state": "Sweden",
+     "verdict": "not_established",
+     "tier": null,
+     "source_id": "",
+     "source_url": "",
+     "evidence_quote": "",
+     "reason": "this state's sources were searched and returned no state-specific evidence naming this comparator"
+    }
+   ],
+   "tiers": [
+    1
+   ],
+   "cross_tier_confirmed": false,
+   "or_alternative": false,
+   "general_evidence_flag": false,
+   "rationale": "Positioned at second line or later; named as a recommended option for patients who have progressed after first-line platinum-based chemotherapy.",
+   "scope_adjudication": {
+    "comparator_inn": "CAV (cyclophosphamide, doxorubicin and vincristine)",
+    "verdict": "in_scope",
+    "evidence_for": [],
+    "evidence_against": [],
+    "decisive_facet": "line_of_therapy",
+    "reason": "named as a second-line option for this population",
+    "adjudicator_version": "a12.scope_adjudication/v1"
+   },
+   "origin": "agent_found",
+   "sources": [
+    {
+     "source_id": "src-ef429691c41f",
+     "display_name": "Clinical guideline (esmo.org)",
+     "url": "https://esmo.org/guidelines/lung-and-chest-tumours/small-cell-lung-cancer",
+     "tier": 1,
+     "source_class": "clinical_guideline",
+     "organization": "",
+     "document_title": "",
+     "document_date": "",
+     "language": "en"
+    }
+   ],
+   "evidence": [
+    {
+     "source_id": "src-ef429691c41f",
+     "quote": "CAV (cyclophosphamide, doxorubicin and vincristine) is an alternative option [II, B]",
+     "locator": "",
+     "member_state": "EU/general",
+     "grounded": true,
+     "validation_verdict": "SUPPORTED",
+     "refetched": true
+    }
+   ]
+  }
+ ],
+ "by_member_state": [
+  {
+   "member_state": "Austria",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Belgium",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Bulgaria",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Croatia",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Cyprus",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Czech Republic",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Denmark",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Estonia",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Finland",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "France",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Germany",
+   "status": "identified",
+   "comparators": [
+    "Topotecan"
+   ],
+   "state_search_status": "complete",
+   "finding": "",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Greece",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Hungary",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Ireland",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Italy",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Latvia",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Lithuania",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Luxembourg",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Malta",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Netherlands",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Poland",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Portugal",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Romania",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Slovakia",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Slovenia",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Spain",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  },
+  {
+   "member_state": "Sweden",
+   "status": "not_identified",
+   "comparators": [],
+   "state_search_status": "complete",
+   "finding": "No comparator is identified",
+   "search_failure_detail": []
+  }
+ ],
+ "member_state_summary": {
+  "identified_count": 1,
+  "not_identified_count": 26,
+  "total": 27
+ },
+ "not_identified_states": [
+  "Austria",
+  "Belgium",
+  "Bulgaria",
+  "Croatia",
+  "Cyprus",
+  "Czech Republic",
+  "Denmark",
+  "Estonia",
+  "Finland",
+  "France",
+  "Greece",
+  "Hungary",
+  "Ireland",
+  "Italy",
+  "Latvia",
+  "Lithuania",
+  "Luxembourg",
+  "Malta",
+  "Netherlands",
+  "Poland",
+  "Portugal",
+  "Romania",
+  "Slovakia",
+  "Slovenia",
+  "Spain",
+  "Sweden"
+ ],
+ "outcomes": {
+  "clinical_effectiveness": [
+   {
+    "concept": "Overall survival",
+    "outcome_id": "out-999a3419d9",
+    "category": "Clinical Effectiveness",
+    "catalog_id": "OS",
+    "listed": true,
+    "instrument": "",
+    "unit_of_measurement": "months, median",
+    "unit_disagreement_note": "",
+    "requirement_type": "relative_effect_required",
+    "coverage_status": "evidence_found",
+    "tiers": [
+     1,
+     2
+    ],
+    "cross_tier_confirmed": true,
+    "rationale": "Required by assessing bodies as a relative-effect endpoint in this setting.",
+    "origin": "agent_found",
+    "sources": [
+     {
+      "source_id": "src-5a3d133da34d",
+      "display_name": "National HTA report (g-ba.de)",
+      "url": "https://g-ba.de/bewertungsverfahren/examplimab",
+      "tier": 1,
+      "source_class": "hta_regulatory",
+      "organization": "",
+      "document_title": "",
+      "document_date": "",
+      "language": "en"
+     },
+     {
+      "source_id": "trial-NCT09999999",
+      "display_name": "Examplimab versus topotecan in relapsed ES-SCLC",
+      "url": "https://clinicaltrials.gov/study/NCT09999999",
+      "tier": 2,
+      "source_class": "trial_registry",
+      "organization": "",
+      "document_title": "Examplimab versus topotecan in relapsed ES-SCLC",
+      "document_date": "",
+      "language": "en"
+     }
+    ],
+    "evidence": [
+     {
+      "source_id": "src-5a3d133da34d",
+      "quote": "The committee requires relative effect estimates for overall survival",
+      "locator": "",
+      "member_state": "",
+      "grounded": true,
+      "validation_verdict": "SUPPORTED",
+      "refetched": true
+     },
+     {
+      "source_id": "trial-NCT09999999",
+      "quote": "NCT09999999 outcome measure: Overall survival",
+      "locator": "NCT09999999 outcomesModule",
+      "member_state": "",
+      "grounded": true,
+      "validation_verdict": "SUPPORTED",
+      "refetched": false
+     }
+    ],
+    "aliases_merged": []
+   },
+   {
+    "concept": "Progression-free survival",
+    "outcome_id": "out-3bf0d673ad",
+    "category": "Clinical Effectiveness",
+    "catalog_id": "PFS",
+    "listed": true,
+    "instrument": "",
+    "unit_of_measurement": "Not stated by source",
+    "unit_disagreement_note": "",
+    "requirement_type": "",
+    "coverage_status": "evidence_found",
+    "tiers": [
+     2
+    ],
+    "cross_tier_confirmed": false,
+    "rationale": "Required by assessing bodies as a relative-effect endpoint in this setting.",
+    "origin": "agent_found",
+    "sources": [
+     {
+      "source_id": "trial-NCT09999999",
+      "display_name": "Examplimab versus topotecan in relapsed ES-SCLC",
+      "url": "https://clinicaltrials.gov/study/NCT09999999",
+      "tier": 2,
+      "source_class": "trial_registry",
+      "organization": "",
+      "document_title": "Examplimab versus topotecan in relapsed ES-SCLC",
+      "document_date": "",
+      "language": "en"
+     }
+    ],
+    "evidence": [
+     {
+      "source_id": "trial-NCT09999999",
+      "quote": "NCT09999999 outcome measure: Progression-free survival",
+      "locator": "NCT09999999 outcomesModule",
+      "member_state": "",
+      "grounded": true,
+      "validation_verdict": "SUPPORTED",
+      "refetched": false
+     }
+    ],
+    "aliases_merged": []
+   },
+   {
+    "concept": "Objective response rate",
+    "outcome_id": "out-5300ce18af",
+    "category": "Clinical Effectiveness",
+    "catalog_id": "ORR",
+    "listed": true,
+    "instrument": "",
+    "unit_of_measurement": "Not stated by source",
+    "unit_disagreement_note": "",
+    "requirement_type": "",
+    "coverage_status": "evidence_found",
+    "tiers": [
+     2
+    ],
+    "cross_tier_confirmed": false,
+    "rationale": "Required by assessing bodies as a relative-effect endpoint in this setting.",
+    "origin": "agent_found",
+    "sources": [
+     {
+      "source_id": "trial-NCT09999999",
+      "display_name": "Examplimab versus topotecan in relapsed ES-SCLC",
+      "url": "https://clinicaltrials.gov/study/NCT09999999",
+      "tier": 2,
+      "source_class": "trial_registry",
+      "organization": "",
+      "document_title": "Examplimab versus topotecan in relapsed ES-SCLC",
+      "document_date": "",
+      "language": "en"
+     }
+    ],
+    "evidence": [
+     {
+      "source_id": "trial-NCT09999999",
+      "quote": "NCT09999999 outcome measure: Objective response rate",
+      "locator": "NCT09999999 outcomesModule",
+      "member_state": "",
+      "grounded": true,
+      "validation_verdict": "SUPPORTED",
+      "refetched": false
+     }
+    ],
+    "aliases_merged": []
+   }
+  ],
+  "safety": [
+   {
+    "concept": "Serious adverse events",
+    "outcome_id": "out-784a96a645",
+    "category": "Safety",
+    "catalog_id": "AE_SERIOUS",
+    "listed": true,
+    "instrument": "",
+    "unit_of_measurement": "% of patients",
+    "unit_disagreement_note": "",
+    "requirement_type": "",
+    "coverage_status": "evidence_found",
+    "tiers": [
+     1
+    ],
+    "cross_tier_confirmed": false,
+    "rationale": "Required by assessing bodies as a relative-effect endpoint in this setting.",
+    "origin": "agent_found",
+    "sources": [
+     {
+      "source_id": "src-4d18d7f7da82",
+      "display_name": "EMA product label (EPAR) (ema.europa.eu)",
+      "url": "https://ema.europa.eu/en/medicines/human/EPAR/examplimab",
+      "tier": 1,
+      "source_class": "drug_registry_label",
+      "organization": "",
+      "document_title": "",
+      "document_date": "",
+      "language": "en"
+     }
+    ],
+    "evidence": [
+     {
+      "source_id": "src-4d18d7f7da82",
+      "quote": "Reported outcomes were overall survival, progression-free survival, objective response rate, serious adverse events",
+      "locator": "",
+      "member_state": "",
+      "grounded": true,
+      "validation_verdict": "SUPPORTED",
+      "refetched": true
+     }
+    ],
+    "aliases_merged": []
+   },
+   {
+    "concept": "Grade >=3 adverse events",
+    "outcome_id": "out-34141b3107",
+    "category": "Safety",
+    "catalog_id": "AE_G3",
+    "listed": true,
+    "instrument": "",
+    "unit_of_measurement": "% of patients",
+    "unit_disagreement_note": "",
+    "requirement_type": "",
+    "coverage_status": "evidence_found",
+    "tiers": [
+     1
+    ],
+    "cross_tier_confirmed": false,
+    "rationale": "Required by assessing bodies as a relative-effect endpoint in this setting.",
+    "origin": "agent_found",
+    "sources": [
+     {
+      "source_id": "src-4d18d7f7da82",
+      "display_name": "EMA product label (EPAR) (ema.europa.eu)",
+      "url": "https://ema.europa.eu/en/medicines/human/EPAR/examplimab",
+      "tier": 1,
+      "source_class": "drug_registry_label",
+      "organization": "",
+      "document_title": "",
+      "document_date": "",
+      "language": "en"
+     }
+    ],
+    "evidence": [
+     {
+      "source_id": "src-4d18d7f7da82",
+      "quote": "serious adverse events, and grade >=3 adverse events",
+      "locator": "",
+      "member_state": "",
+      "grounded": true,
+      "validation_verdict": "SUPPORTED",
+      "refetched": true
+     }
+    ],
+    "aliases_merged": []
+   }
+  ],
+  "quality_of_life": [
+   {
+    "concept": "health-related quality of life measured with a disease-specific instrument",
+    "outcome_id": "out-a0fe61a19b",
+    "category": "Quality of Life",
+    "catalog_id": "",
+    "listed": false,
+    "instrument": "",
+    "unit_of_measurement": "points, change from baseline",
+    "unit_disagreement_note": "",
+    "requirement_type": "relative_effect_required",
+    "coverage_status": "evidence_found",
+    "tiers": [
+     1
+    ],
+    "cross_tier_confirmed": false,
+    "rationale": "Required by assessing bodies as a relative-effect endpoint in this setting.",
+    "origin": "agent_found",
+    "sources": [
+     {
+      "source_id": "src-5a3d133da34d",
+      "display_name": "National HTA report (g-ba.de)",
+      "url": "https://g-ba.de/bewertungsverfahren/examplimab",
+      "tier": 1,
+      "source_class": "hta_regulatory",
+      "organization": "",
+      "document_title": "",
+      "document_date": "",
+      "language": "en"
+     }
+    ],
+    "evidence": [
+     {
+      "source_id": "src-5a3d133da34d",
+      "quote": "health-related quality of life measured with a disease-specific instrument",
+      "locator": "",
+      "member_state": "",
+      "grounded": true,
+      "validation_verdict": "SUPPORTED",
+      "refetched": true
+     }
+    ],
+    "aliases_merged": []
+   }
+  ],
+  "clinician_patient_reported": [
+   {
+    "concept": "Patient-reported symptom burden",
+    "outcome_id": "out-2010a8472f",
+    "category": "Clinician / Patient-Reported Outcomes (COA)",
+    "catalog_id": "PRO_SYMPTOM",
+    "listed": true,
+    "instrument": "Validated instrument as named by the source",
+    "unit_of_measurement": "Not stated by source",
+    "unit_disagreement_note": "",
+    "requirement_type": "relative_effect_required",
+    "coverage_status": "evidence_found",
+    "tiers": [
+     1
+    ],
+    "cross_tier_confirmed": false,
+    "rationale": "Required by assessing bodies as a relative-effect endpoint in this setting.",
+    "origin": "agent_found",
+    "sources": [
+     {
+      "source_id": "src-ef429691c41f",
+      "display_name": "Clinical guideline (esmo.org)",
+      "url": "https://esmo.org/guidelines/lung-and-chest-tumours/small-cell-lung-cancer",
+      "tier": 1,
+      "source_class": "clinical_guideline",
+      "organization": "",
+      "document_title": "",
+      "document_date": "",
+      "language": "en"
+     }
+    ],
+    "evidence": [
+     {
+      "source_id": "src-ef429691c41f",
+      "quote": "Patient-reported symptom burden should also be captured",
+      "locator": "",
+      "member_state": "",
+      "grounded": true,
+      "validation_verdict": "SUPPORTED",
+      "refetched": true
+     }
+    ],
+    "aliases_merged": []
+   }
+  ],
+  "catalog_coverage": [
+   {
+    "catalog_id": "OS",
+    "display_name": "Overall survival",
+    "category": "Clinical Effectiveness",
+    "status": "evidence_found",
+    "matched_outcome_id": "out-999a3419d9",
+    "detail": ""
+   },
+   {
+    "catalog_id": "PFS",
+    "display_name": "Progression-free survival",
+    "category": "Clinical Effectiveness",
+    "status": "evidence_found",
+    "matched_outcome_id": "out-3bf0d673ad",
+    "detail": ""
+   },
+   {
+    "catalog_id": "ORR",
+    "display_name": "Objective response rate",
+    "category": "Clinical Effectiveness",
+    "status": "evidence_found",
+    "matched_outcome_id": "out-5300ce18af",
+    "detail": ""
+   },
+   {
+    "catalog_id": "DCR",
+    "display_name": "Disease control rate",
+    "category": "Clinical Effectiveness",
+    "status": "no_relevant_evidence_found",
+    "matched_outcome_id": "",
+    "detail": "no source retrieved in this run stated this outcome"
+   },
+   {
+    "catalog_id": "AE_G3",
+    "display_name": "Grade >=3 adverse events",
+    "category": "Safety",
+    "status": "evidence_found",
+    "matched_outcome_id": "out-34141b3107",
+    "detail": ""
+   },
+   {
+    "catalog_id": "AE_DISC",
+    "display_name": "Discontinuation due to adverse events",
+    "category": "Safety",
+    "status": "no_relevant_evidence_found",
+    "matched_outcome_id": "",
+    "detail": "no source retrieved in this run stated this outcome"
+   },
+   {
+    "catalog_id": "AE_SERIOUS",
+    "display_name": "Serious adverse events",
+    "category": "Safety",
+    "status": "evidence_found",
+    "matched_outcome_id": "out-784a96a645",
+    "detail": ""
+   },
+   {
+    "catalog_id": "HRQOL_DISEASE",
+    "display_name": "Health-related quality of life (disease-specific)",
+    "category": "Quality of Life",
+    "status": "no_relevant_evidence_found",
+    "matched_outcome_id": "",
+    "detail": "no source retrieved in this run stated this outcome"
+   },
+   {
+    "catalog_id": "HEALTH_STATUS",
+    "display_name": "Generic health status",
+    "category": "Quality of Life",
+    "status": "no_relevant_evidence_found",
+    "matched_outcome_id": "",
+    "detail": "no source retrieved in this run stated this outcome"
+   },
+   {
+    "catalog_id": "PRO_SYMPTOM",
+    "display_name": "Patient-reported symptom burden",
+    "category": "Clinician / Patient-Reported Outcomes (COA)",
+    "status": "evidence_found",
+    "matched_outcome_id": "out-2010a8472f",
+    "detail": ""
+   },
+   {
+    "catalog_id": "CLINRO_FUNCTION",
+    "display_name": "Clinician-reported functional status",
+    "category": "Clinician / Patient-Reported Outcomes (COA)",
+    "status": "no_relevant_evidence_found",
+    "matched_outcome_id": "",
+    "detail": "no source retrieved in this run stated this outcome"
+   }
+  ]
+ },
+ "source_registry": [
+  {
+   "source_id": "src-ef429691c41f",
+   "display_name": "Clinical guideline (esmo.org)",
+   "url": "https://esmo.org/guidelines/lung-and-chest-tumours/small-cell-lung-cancer",
+   "tier": 1,
+   "source_class": "clinical_guideline",
+   "organization": "",
+   "document_title": "",
+   "document_date": "",
+   "language": "en"
+  },
+  {
+   "source_id": "src-5a3d133da34d",
+   "display_name": "National HTA report (g-ba.de)",
+   "url": "https://g-ba.de/bewertungsverfahren/examplimab",
+   "tier": 1,
+   "source_class": "hta_regulatory",
+   "organization": "",
+   "document_title": "",
+   "document_date": "",
+   "language": "en"
+  },
+  {
+   "source_id": "src-4d18d7f7da82",
+   "display_name": "EMA product label (EPAR) (ema.europa.eu)",
+   "url": "https://ema.europa.eu/en/medicines/human/EPAR/examplimab",
+   "tier": 1,
+   "source_class": "drug_registry_label",
+   "organization": "",
+   "document_title": "",
+   "document_date": "",
+   "language": "en"
+  },
+  {
+   "source_id": "trial-NCT09999999",
+   "display_name": "clinicaltrials.gov \u2014 Examplimab versus topotecan in relapsed ES-SCLC",
+   "url": "https://clinicaltrials.gov/study/NCT09999999",
+   "tier": 2,
+   "source_class": "trial_registry",
+   "organization": "clinicaltrials.gov",
+   "document_title": "Examplimab versus topotecan in relapsed ES-SCLC",
+   "document_date": "",
+   "language": "en"
+  }
+ ],
+ "validation": {
+  "records_extracted": 15,
+  "grounded": 15,
+  "grounding_failed": 0,
+  "claim_validated": 13,
+  "claim_rejected": 2,
+  "refetch_attempted": 10,
+  "subject_drug_rejections": 1,
+  "role_rejections": 0,
+  "scope_in": 2,
+  "scope_out": 0,
+  "scope_uncertain": 0,
+  "excluded": [
+   {
+    "value": "Atezolizumab",
+    "stage": "claim_validation",
+    "reason": "claim is about 'Otherdrugimab', not the requested intervention 'Examplimab'",
+    "source_url": "https://esmo.org/guidelines/other-drug-maintenance"
+   },
+   {
+    "value": "Carboplatin plus etoposide",
+    "stage": "claim_validation",
+    "reason": "induction-phase regimen is prior therapy for this population",
+    "source_url": "https://ema.europa.eu/en/medicines/human/EPAR/examplimab"
+   }
+  ]
+ },
+ "completeness": {
+  "member_states": {
+   "total": 27,
+   "searched": 27,
+   "with_findings": 1,
+   "no_findings": 26,
+   "search_failed": 0
+  },
+  "source_class_matrix": [
+   {
+    "member_state": "Denmark",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Belgium",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Greece",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": "no curated domains; unscoped fallback search"
+   },
+   {
+    "member_state": "Bulgaria",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Estonia",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "France",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Croatia",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Bulgaria",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Czech Republic",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Cyprus",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Germany",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "France",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Estonia",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Finland",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Belgium",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Czech Republic",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Croatia",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Germany",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Estonia",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Denmark",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Austria",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "EU-wide",
+    "source_class": "drug_registry_label",
+    "attempted": true,
+    "documents_retrieved": 1,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Finland",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Cyprus",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Croatia",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Czech Republic",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Austria",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Cyprus",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": "no curated domains; unscoped fallback search"
+   },
+   {
+    "member_state": "Belgium",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Denmark",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Germany",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 1,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Austria",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Greece",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Finland",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "France",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Bulgaria",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": "no curated domains; unscoped fallback search"
+   },
+   {
+    "member_state": "Greece",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Hungary",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Hungary",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Hungary",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Ireland",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Ireland",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Ireland",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Italy",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Italy",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Italy",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Latvia",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Latvia",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Latvia",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Lithuania",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Lithuania",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Lithuania",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Luxembourg",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": "no curated domains; unscoped fallback search"
+   },
+   {
+    "member_state": "Luxembourg",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Luxembourg",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Malta",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": "no curated domains; unscoped fallback search"
+   },
+   {
+    "member_state": "Malta",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Malta",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Netherlands",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Netherlands",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Netherlands",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Poland",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Poland",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Poland",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Portugal",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Portugal",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Portugal",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Romania",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Romania",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Romania",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Slovakia",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Slovakia",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Slovakia",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Slovenia",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Slovenia",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Slovenia",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Spain",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Spain",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Spain",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Sweden",
+    "source_class": "hta_regulatory",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Sweden",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "Sweden",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 0,
+    "status": "no_relevant_evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "EU/general",
+    "source_class": "clinical_guideline",
+    "attempted": true,
+    "documents_retrieved": 2,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "EU/general",
+    "source_class": "trial_registry",
+    "attempted": true,
+    "documents_retrieved": 1,
+    "status": "evidence_found",
+    "detail": ""
+   },
+   {
+    "member_state": "EU/general",
+    "source_class": "pubmed",
+    "attempted": true,
+    "documents_retrieved": 1,
+    "status": "evidence_found",
+    "detail": ""
+   }
+  ],
+  "outcome_categories": [
+   {
+    "category": "Clinical Effectiveness",
+    "status": "evidence_found",
+    "catalog_items_covered": 3,
+    "catalog_items_total": 4
+   },
+   {
+    "category": "Safety",
+    "status": "evidence_found",
+    "catalog_items_covered": 2,
+    "catalog_items_total": 3
+   },
+   {
+    "category": "Quality of Life",
+    "status": "evidence_found",
+    "catalog_items_covered": 0,
+    "catalog_items_total": 2
+   },
+   {
+    "category": "Clinician / Patient-Reported Outcomes (COA)",
+    "status": "evidence_found",
+    "catalog_items_covered": 1,
+    "catalog_items_total": 2
+   }
+  ],
+  "populations_processed": [
+   "licensed"
+  ],
+  "assertions": [
+   {
+    "name": "by_member_state_has_27_entries",
+    "passed": true,
+    "detail": "found 27"
+   },
+   {
+    "name": "member_state_summary_sums_to_27",
+    "passed": true,
+    "detail": ""
+   },
+   {
+    "name": "every_comparator_has_grounded_evidence",
+    "passed": true,
+    "detail": ""
+   },
+   {
+    "name": "no_comparator_carries_the_intervention_class",
+    "passed": true,
+    "detail": ""
+   },
+   {
+    "name": "every_comparator_has_27_state_verdicts",
+    "passed": true,
+    "detail": ""
+   },
+   {
+    "name": "all_catalog_outcomes_have_a_status",
+    "passed": true,
+    "detail": ""
+   },
+   {
+    "name": "no_pico_sets_in_phase1_output",
+    "passed": true,
+    "detail": "PICO-set generation is Phase 2 and is absent by design"
+   }
+  ]
+ },
+ "run_manifest": {
+  "request_id": "demo-run",
+  "phase": "phase1_comparator_outcome_scoping",
+  "phase2_included": false,
+  "code_version": "dev",
+  "model": "anthropic.claude-sonnet-5",
+  "prompt_versions": {
+   "a01.pi_validation": "v1",
+   "a02.input_structuring": "v1",
+   "a03.scope_facet_normalise": "v1",
+   "a04.indication_lock": "v1",
+   "a05.area_adjudication": "v1",
+   "a06.query_vocabulary": "v1",
+   "a08.extraction": "v1",
+   "a10.claim_validation": "v1",
+   "a11.comparator_identity": "v1",
+   "a12.scope_adjudication": "v1",
+   "a14.outcome_harmonization": "v1",
+   "a16.comparator_rationale": "v1",
+   "a16.outcome_rationale": "v1",
+   "a16.indication_synthesis": "v1"
+  },
+  "outcome_catalog_version": "madeai-11-v1",
+  "source_workbook": {
+   "path": "fixtures/MadeAi_JCA_Source_List.xlsx",
+   "sheets_matched": {
+    "soc": "Standard of Care  Guidelines",
+    "hta": "HTA licensing sources",
+    "emea": "EMEA licensing sources"
+   },
+   "entries": 340,
+   "unique_domains": 71,
+   "problems": [],
+   "mtime": "2026-09-15T08:17:34.629874+00:00"
+  },
+  "therapeutic_areas_applied": [
+   "Oncology",
+   "Rare Diseases"
+  ],
+  "leakage_guard": {
+   "enabled": true,
+   "allow_jca_reports": false,
+   "blocked_domains": [
+    "health.ec.europa.eu"
+   ],
+   "blocked_urls": []
+  },
+  "tier3_enabled": false,
+  "providers": {
+   "llm": "ScriptedLLM",
+   "search": "FixtureSearchProvider",
+   "trials": "FixtureTrialRegistry",
+   "literature": "FixtureLiterature",
+   "medicines": "FixtureMedicineRegistry"
+  },
+  "started_at": "2026-09-15T08:37:51.246832+00:00",
+  "finished_at": "2026-09-15T08:37:51.483057+00:00",
+  "duration_s": 0.24,
+  "llm_usage": {
+   "calls": 25,
+   "failed_calls": 0,
+   "input_tokens": 19134,
+   "output_tokens": 2111,
+   "latency_s": 0.0,
+   "by_prompt": {
+    "a01.pi_validation": 1,
+    "a02.input_structuring": 1,
+    "a03.scope_facet_normalise": 1,
+    "a06.query_vocabulary": 1,
+    "a08.extraction": 4,
+    "a10.claim_validation": 3,
+    "a11.comparator_identity": 1,
+    "a12.scope_adjudication": 2,
+    "a16.indication_synthesis": 1,
+    "a16.comparator_rationale": 2,
+    "a14.outcome_harmonization": 1,
+    "a16.outcome_rationale": 7
+   },
+   "prompt_versions": {
+    "a01.pi_validation": "v1",
+    "a02.input_structuring": "v1",
+    "a03.scope_facet_normalise": "v1",
+    "a06.query_vocabulary": "v1",
+    "a08.extraction": "v1",
+    "a10.claim_validation": "v1",
+    "a11.comparator_identity": "v1",
+    "a12.scope_adjudication": "v1",
+    "a16.indication_synthesis": "v1",
+    "a16.comparator_rationale": "v1",
+    "a14.outcome_harmonization": "v1",
+    "a16.outcome_rationale": "v1"
+   }
+  },
+  "search_usage": {
+   "calls": 111,
+   "failed_calls": 0,
+   "searches": 83,
+   "fetches": 28,
+   "cached_documents": 25,
+   "latency_s": 0.0
+  }
+ },
+ "notes": [],
+ "pico_sets": null,
+ "pico_sets_note": "PICO-set generation is Phase 2 and is out of scope for this module."
+}
