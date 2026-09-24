@@ -127,6 +127,17 @@ def _record_row(r: Dict[str, Any]) -> list:
     comp = r.get("comparator") or {}
     outc = r.get("outcome") or {}
     v = r.get("validation") or {}
+    pc = r.get("population_context") or {}
+    is_outcome = r.get("finding_type") != "comparator"
+    # Same summary a10.claim_validation's own payload already shows the LLM
+    # (see agents/a09_a13_validation.py's _validate_batch) -- the source's
+    # OWN stated population for this specific finding, which is exactly what
+    # A12 scope adjudication reasons over per-record. Previously invisible
+    # at the record level; only inferable after the fact from the final verdict.
+    pc_summary = ", ".join(dict.fromkeys(
+        val for val in [pc.get("disease"), pc.get("subtype_histology"), pc.get("stage"),
+                       pc.get("biomarker"), pc.get("line_of_therapy"), pc.get("prior_therapy"),
+                       pc.get("treatment_setting_intent")] if val))
     return [
         r.get("finding_id"), r.get("finding_type"), r.get("subject_drug"),
         r.get("member_state"), r.get("source_class"), r.get("tier"),
@@ -138,6 +149,12 @@ def _record_row(r: Dict[str, Any]) -> list:
         v.get("verdict"), v.get("reason"), v.get("refetched"),
         r.get("evidence_status"), r.get("data_maturity"),
         r.get("trial_status"), r.get("peer_review_status"),
+        comp.get("thin_mention") if r.get("finding_type") == "comparator" else None,
+        pc_summary, r.get("recommendation_strength"), r.get("retrieval_method"),
+        r.get("document_title"), r.get("document_date"),
+        outc.get("unit") if is_outcome else None,
+        outc.get("instrument") if is_outcome else None,
+        outc.get("is_requirement") if is_outcome else None,
     ]
 
 
@@ -147,7 +164,10 @@ _RECORD_HEADERS = ["finding_id", "finding_type", "subject_drug", "member_state",
                    "grounded", "grounding_note", "validation_verdict",
                    "validation_reason", "refetched",
                    "evidence_status", "data_maturity", "trial_status",
-                   "peer_review_status"]
+                   "peer_review_status", "thin_mention",
+                   "population_context", "recommendation_strength", "retrieval_method",
+                   "document_title", "document_date",
+                   "outcome_unit", "outcome_instrument", "outcome_is_requirement"]
 
 
 def build_excel(run: Dict[str, Any]) -> bytes:
@@ -159,6 +179,10 @@ def build_excel(run: Dict[str, Any]) -> bytes:
     ws = wb.active
     ws.title = "Run Summary"
     v = out.get("validation", {})
+    # member_state_summary is the literal "sums to 27" completeness invariant
+    # MemberStateSummary.__post_init__ enforces on every run -- previously
+    # never surfaced anywhere in the export.
+    mss = out.get("member_state_summary") or {}
     _write_table(ws, ["field", "value"], [
         ["run_id", run.get("run_id")], ["status", run.get("status")],
         ["total_latency_s", run.get("total_latency_s")],
@@ -174,11 +198,20 @@ def build_excel(run: Dict[str, Any]) -> bytes:
         ["role_rejections", v.get("role_rejections")],
         ["scope_in", v.get("scope_in")], ["scope_out", v.get("scope_out")],
         ["scope_uncertain", v.get("scope_uncertain")],
+        ["member_states_identified", mss.get("identified_count")],
+        ["member_states_not_identified", mss.get("not_identified_count")],
+        ["member_states_total", mss.get("total")],
     ])
 
     ws = wb.create_sheet("Prompt Versions Used")
     _write_table(ws, ["prompt_id", "version"],
                 [[k, v_] for k, v_ in run.get("prompt_versions_used", {}).items()])
+
+    # Operational warnings (e.g. "claim validation skipped this run", a
+    # blocked-JCA-report count) -- previously invisible; a reviewer looking
+    # at empty validation columns had no way to learn WHY.
+    ws = wb.create_sheet("Run Notes")
+    _write_table(ws, ["note"], [[n] for n in out.get("notes", [])])
 
     _write_legend(wb)
 
@@ -204,6 +237,11 @@ def build_excel(run: Dict[str, Any]) -> bytes:
     interv = out.get("intervention", {}) or {}
     rows = [[fname, f.get("value"), f.get("provenance"), f.get("inference_basis")]
            for fname, f in interv.get("fields", {}).items()]
+    # The resolved substance identity of the drug being ASSESSED -- core
+    # metadata, previously absent (only the raw stated fields were shown).
+    rows += [["inn_resolved", interv.get("inn_resolved"), "", ""],
+            ["atc_code", interv.get("atc_code"), "", ""],
+            ["user_confirmed", interv.get("user_confirmed"), "", ""]]
     _write_table(ws, ["field", "value", "provenance", "inference_basis"], rows)
 
     # ---- A3 scope boundary --------------------------------------------------
@@ -468,6 +506,13 @@ def build_excel(run: Dict[str, Any]) -> bytes:
                   d.get("organization"), d.get("ok"), d.get("status"), d.get("title"),
                   (d.get("text") or "")[:300]] for d in docs], DEBUG_HEADER_FILL)
 
+    ws = wb.create_sheet("A7b Comparator Follow-up (Det)")
+    followup_attempts = (debug.get("A7b_comparator_followup") or {}).get("attempts", [])
+    _write_table(ws, ["candidate_name", "tier", "query_sent", "documents_retrieved", "status"],
+                [[a.get("candidate_name"), a.get("tier"), a.get("query_sent"),
+                  a.get("documents_retrieved"), a.get("status")] for a in followup_attempts],
+                DEBUG_HEADER_FILL)
+
     for key, title in [("A8_extraction", "A8 Extraction (LLM)"),
                        ("A9_grounding", "A9 Grounding (Det)"),
                        ("A10_claim_validation", "A10 Claim Validation (Mix)"),
@@ -484,11 +529,19 @@ def build_excel(run: Dict[str, Any]) -> bytes:
     _component_display = lambda c: c if isinstance(c, str) else str(
         (c or {}).get("display_name") or (c or {}).get("inn") or c)
     _write_table(ws, ["as_stated_key", "inn", "atc_code", "class_mechanism", "class_source",
-                     "is_combination", "components"],
+                     "is_combination", "components", "audit_merged_into"],
                 [[k, v_.get("inn"), v_.get("atc_code"), v_.get("class_mechanism"),
                   v_.get("class_source"), v_.get("is_combination"),
-                  "; ".join(_component_display(c) for c in (v_.get("components") or []))]
+                  "; ".join(_component_display(c) for c in (v_.get("components") or [])),
+                  v_.get("audit_merged_into")]
                  for k, v_ in identities.items()],
+                DEBUG_HEADER_FILL)
+
+    ws = wb.create_sheet("A11 Identity Audit (LLM)")
+    audit_merges = (debug.get("A11b_identity_audit") or {}).get("merges") or []
+    _write_table(ws, ["canonical_display_name", "duplicate_display_name", "reason"],
+                [[m.get("canonical_display_name"), m.get("loser_display_name"), m.get("reason")]
+                 for m in audit_merges],
                 DEBUG_HEADER_FILL)
 
     ws = wb.create_sheet("A12 All Candidates (LLM)")
@@ -553,6 +606,18 @@ def build_excel(run: Dict[str, Any]) -> bytes:
     rows += [["population_processed", p, "", ""]
             for p in comp_report.get("populations_processed", [])]
     _write_table(ws, ["kind", "name", "value", "detail"], rows)
+
+    # The AUDITED final coverage matrix -- distinct from "A7 Retrieval
+    # Attempts (Det)" above, which is the pre-audit debug snapshot. This is
+    # the actual CompletenessReport.source_class_matrix field on the final
+    # Phase1Output, previously never read by this export at all.
+    ws = wb.create_sheet("A17 Source Class Matrix (Det)")
+    matrix = comp_report.get("source_class_matrix") or []
+    _write_table(ws, ["member_state", "source_class", "attempted", "documents_retrieved",
+                     "status", "detail"],
+                [[m.get("member_state"), m.get("source_class"), m.get("attempted"),
+                  m.get("documents_retrieved"), m.get("status"), m.get("detail")]
+                 for m in matrix])
 
     _write_ui_sheets(wb, out)
 

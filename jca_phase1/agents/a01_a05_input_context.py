@@ -98,7 +98,8 @@ def validate_pi(population_input: Dict[str, Any],
                 lines.append(f'- {k} ("{spec.get("label", k)}" — '
                              f'{spec.get("definition", "no definition")}): {v}')
             payload = "FIELDS WITH CONTENT:\n" + "\n".join(lines)
-            parsed = llm.call_json("a01.pi_validation", payload, max_tokens=2000, default={})
+            parsed = llm.call_json("a01.pi_validation", payload,
+                                   max_tokens=C.LLM.pi_validation_max_tokens, default={})
             for item in (parsed or {}).get("fix_items", []) or []:
                 fields = item.get("fields") or []
                 if any(f in {i.fields[0] for i in result.fix_items if i.fields} for f in fields):
@@ -160,7 +161,8 @@ def structure_pi(population_input: Dict[str, Any],
             + json.dumps({"population": population_input, "intervention": intervention_input},
                          indent=2, default=str)
             + (f"\n\nFREE TEXT:\n{free_text}" if free_text.strip() else ""))
-        parsed = llm.call_json("a02.input_structuring", payload, max_tokens=4000, default={})
+        parsed = llm.call_json("a02.input_structuring", payload,
+                               max_tokens=C.LLM.input_structuring_max_tokens, default={})
         _apply_structuring(parsed, licensed, intervention, populations)
 
     populations.insert(0, licensed)
@@ -285,7 +287,7 @@ def lock_indication(intervention: Intervention,
             parsed = llm.call_json(
                 "a04.indication_lock",
                 f"PRODUCT: {product}\n\nDOCUMENT:\n{doc.text[:60000]}",
-                max_tokens=1500, default={}) or {}
+                max_tokens=C.LLM.indication_lock_max_tokens, default={}) or {}
             record.indication_text = parsed.get("indication_text", "") or ""
             record.pivotal_trials = list(dict.fromkeys(
                 record.pivotal_trials + (parsed.get("pivotal_trials") or [])))
@@ -375,7 +377,8 @@ def build_scope_boundary(population: Population, intervention: Intervention,
                                    if v.value)
                        + "\n\nFREE-TEXT FIELDS TO NORMALISE:\n" + "\n".join(free_bits))
             parsed = llm.call_json("a03.scope_facet_normalise", payload,
-                                   max_tokens=1500, default={}) or {}
+                                   max_tokens=C.LLM.scope_facet_normalise_max_tokens,
+                                   default={}) or {}
             for item in parsed.get("facets", []) or []:
                 name = item.get("name", "")
                 value = item.get("value", "")
@@ -474,7 +477,8 @@ def resolve_therapeutic_areas(population: Population,
             f"ICD CODE: {population.value('icd_disease_code') or '(not provided)'}\n"
             f"ORPHAN / RARE DISEASE: {population.value('orphan_rare_disease') or '(not provided)'}\n"
             f"DETERMINISTIC KEYWORD CANDIDATES: {hits or '(none)'}\n")
-        parsed = llm.call_json("a05.area_adjudication", payload, max_tokens=800,
+        parsed = llm.call_json("a05.area_adjudication", payload,
+                               max_tokens=C.LLM.area_adjudication_max_tokens,
                                default={}) or {}
         areas, rationales = [], {}
         for item in parsed.get("areas", []) or []:

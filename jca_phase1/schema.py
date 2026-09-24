@@ -296,12 +296,24 @@ class AreaResolution:
 @dataclass
 class QueryVocabulary:
     """Produced by ONE LLM call per request. Deliberately has no comparator
-    field: the query planner must not be able to name the answer."""
+    field, with ONE documented exception: standard_of_care_candidates below.
+    Every other field must never be able to name the answer."""
     indication_synonyms: List[str] = field(default_factory=list)
     indication_abbreviations: List[str] = field(default_factory=list)
     disease_class_terms: List[str] = field(default_factory=list)
     localised_assessment_terms: Dict[str, List[str]] = field(default_factory=dict)
     outcome_requirement_terms: List[str] = field(default_factory=list)
+    # The ONE exception to "no comparator field": DISEASE-GENERAL established
+    # treatment names (not an assertion about what compares against the
+    # requested drug) so retrieval can search for a real comparator BY NAME
+    # instead of only finding it by accident inside a disease-only search.
+    # Every document these queries retrieve still goes through the exact
+    # same independent a08-a12 extraction/validation/adjudication pipeline as
+    # anything else -- this field only widens what gets searched for, it
+    # never decides the answer. Confirmed real gap: two GT comparators
+    # (Everolimus, Bevacizumab+chemo) had zero hits across multiple runs
+    # because no query path ever named a candidate comparator at all.
+    standard_of_care_candidates: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -312,6 +324,14 @@ PASS_LANDSCAPE = "landscape"          # NOT drug-anchored — finds the complete
                                        # treatment-line landscape a guideline states
 PASS_OUTCOME_REQUIREMENT = "outcome_requirement"
 PASS_REFINEMENT = "refinement"
+PASS_COMPARATOR_ANCHORED = "comparator_anchored"  # anchored on a CANDIDATE
+                                       # comparator's own name, not the
+                                       # requested drug or disease alone
+PASS_COMPARATOR_FOLLOWUP = "comparator_followup"  # Version B: a SECOND-round
+                                       # query, anchored on a comparator name
+                                       # that organically surfaced from real
+                                       # round-1 evidence with only a thin
+                                       # mention -- not a guessed candidate
 
 
 @dataclass
@@ -382,6 +402,14 @@ class Comparator:
     # one comparator -- without this, that history is gone the moment
     # as_stated is unified, and aliases_merged can never be populated.
     raw_as_stated: str = ""
+    # True when the source passage only NAMES this comparator with no
+    # dosing/regimen/population/outcome detail (a passing background
+    # mention). Seeds Version B's name-targeted follow-up retrieval round --
+    # a comparator whose own dedicated evidence never ranks in a disease-only
+    # search still gets a second, targeted chance once its name has
+    # organically surfaced. Independent of `role`: a thinly-mentioned name
+    # can still be role=active_comparator.
+    thin_mention: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

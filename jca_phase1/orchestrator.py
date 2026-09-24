@@ -111,6 +111,7 @@ class _RetrievalPass:
     blocked_count: int = 0
     vocab: Any = None
     plan: List[Any] = field(default_factory=list)
+    followup_attempts: List[Dict[str, Any]] = field(default_factory=list)
 
 
 def _run_retrieval_pass(pop: Population, intervention: Intervention, areas,
@@ -172,6 +173,13 @@ def _run_retrieval_pass(pop: Population, intervention: Intervention, areas,
     result.documents = result.documents + retrieval.documents_from_publications(
         result.publications)
 
+    # Shared by both the main A8 block below and Version B's follow-up round
+    # further down -- always defined so the follow-up round can reuse the
+    # exact same cache regardless of whether the main block's own condition
+    # was true this call.
+    cache = extraction_cache if extraction_cache is not None else {}
+    lock = cache_lock or contextlib.nullcontext()
+
     if providers.llm is not None and result.documents:
         # A8 extraction is population-agnostic by design: it extracts every
         # distinct claim a document states, with population RELEVANCE decided
@@ -189,8 +197,6 @@ def _run_retrieval_pass(pop: Population, intervention: Intervention, areas,
         # record with a fresh finding_id, since downstream grounding/claim-
         # validation mutate a record's fields in place and each population's
         # pass must never see another population's mutations.
-        cache = extraction_cache if extraction_cache is not None else {}
-        lock = cache_lock or contextlib.nullcontext()
         with lock:
             cached_docs = [d for d in result.documents if d.source_id in cache]
             new_docs = [d for d in result.documents if d.source_id not in cache]
@@ -214,6 +220,84 @@ def _run_retrieval_pass(pop: Population, intervention: Intervention, areas,
                 for d in new_docs:
                     cache[d.source_id] = by_source.get(d.source_id, [])
     result.records.extend(retrieval.records_from_trials(result.trials, intervention))
+
+    # ---- Version B: comparator follow-up round -----------------------------
+    # A comparator name that organically surfaced from real round-1 evidence
+    # with only a thin mention (comparator.thin_mention) gets ONE additional,
+    # name-targeted retrieval round -- closes the gap standard_of_care_
+    # candidates can't reach (a comparator the LLM's prior knowledge doesn't
+    # already associate with this disease, but real evidence just named).
+    # Additive only: new documents/records fall through to the SAME A9/A10
+    # calls below, exactly like plan_refinement()'s web documents already do
+    # -- no separate grounding/validation pipeline.
+    thin_candidates = retrieval._dedup([
+        rec.comparator.as_stated for rec in result.records
+        if rec.comparator and rec.comparator.thin_mention])
+    if C.RETRIEVAL.enable_comparator_followup_round and thin_candidates:
+        bounded_candidates = thin_candidates[:C.RETRIEVAL.max_comparator_candidates]
+        opts.emit("A7b", f"Follow-up search for {len(bounded_candidates)} thinly-evidenced "
+                         f"comparator name(s){tag}")
+        followup_docs: List[Any] = []
+        # Looped per-candidate (not one execute_plan() call for all of them)
+        # so each candidate's own document count/query can be tracked
+        # individually for Excel visibility -- execute_plan()'s own
+        # concurrency doesn't preserve a plan-item-to-attempt correlation.
+        if providers.search is not None:
+            for candidate in bounded_candidates:
+                cand_plan = retrieval.plan_comparator_followup(
+                    [candidate], pop, intervention, areas.areas, inventory)
+                if not cand_plan:
+                    continue
+                cand_result = retrieval.execute_plan(
+                    cand_plan, providers.search, guard, inventory, areas.areas,
+                    opts.max_workers)
+                followup_docs += cand_result.documents
+                result.blocked_count += len(cand_result.blocked_by_guard)
+                docs_found = len(cand_result.documents)
+                result.followup_attempts.append({
+                    "candidate_name": candidate,
+                    "tier": C.TIER_OF_SOURCE_CLASS.get(C.SRC_CLINICAL_GUIDELINE, 1),
+                    "query_sent": cand_plan[0].query, "documents_retrieved": docs_found,
+                    "status": C.EV_FOUND if docs_found else C.EV_NONE})
+        if providers.literature is not None:
+            for candidate in bounded_candidates:
+                pubs = retrieval.pubmed_comparator_followup(
+                    [candidate], providers.literature, result.vocab,
+                    pop.value("indication_disease"), intervention.product_name)
+                followup_docs += retrieval.documents_from_publications(pubs)
+                result.followup_attempts.append({
+                    "candidate_name": candidate,
+                    "tier": C.TIER_OF_SOURCE_CLASS.get(C.SRC_PUBMED, 2),
+                    "query_sent": f"PubMed: {candidate}", "documents_retrieved": len(pubs),
+                    "status": C.EV_FOUND if pubs else C.EV_NONE})
+
+        if followup_docs and providers.llm is not None:
+            # Same cached/new_docs split as the main A8 block above, keyed by
+            # source_id, so a URL round 1 already fetched/extracted is never
+            # re-extracted here.
+            with lock:
+                cached_followup = [d for d in followup_docs if d.source_id in cache]
+                new_followup = [d for d in followup_docs if d.source_id not in cache]
+            for d in cached_followup:
+                for rec in cache[d.source_id]:
+                    clone = copy.deepcopy(rec)
+                    clone.finding_id = retrieval._next_id(
+                        "cmp" if clone.finding_type == FINDING_COMPARATOR else "out")
+                    result.records.append(clone)
+            if new_followup:
+                opts.emit("A7b", f"Extracting evidence from {len(new_followup)} follow-up "
+                                 f"document(s){tag}")
+                new_followup_records = retrieval.extract_from_documents(
+                    new_followup, pop, intervention, providers.llm, opts.max_workers)
+                result.records.extend(new_followup_records)
+                by_followup_source: Dict[str, List[EvidenceRecord]] = {}
+                for rec in new_followup_records:
+                    by_followup_source.setdefault(rec.source_id, []).append(rec)
+                with lock:
+                    for d in new_followup:
+                        cache[d.source_id] = by_followup_source.get(d.source_id, [])
+        if followup_docs:
+            result.documents = result.documents + followup_docs
 
     opts.emit("A9", f"Grounding extracted values in their source text{tag}")
     result.records = validation.ground_records(result.records, result.documents)
@@ -305,6 +389,7 @@ def run_phase1(population_input: Dict[str, Any],
     all_trials: List[Any] = []
     all_publications: List[Any] = []
     plans_by_population: List[tuple] = []
+    followup_attempts: List[Dict[str, Any]] = []
     blocked_total = 0
     extraction_cache: Dict[str, List[EvidenceRecord]] = {}
     cache_lock = threading.Lock()
@@ -331,6 +416,7 @@ def run_phase1(population_input: Dict[str, Any],
         documents.extend(pass_result.documents)
         all_trials.extend(pass_result.trials)
         all_publications.extend(pass_result.publications)
+        followup_attempts.extend(pass_result.followup_attempts)
         blocked_total += pass_result.blocked_count
 
     if providers.search is None:
@@ -356,6 +442,7 @@ def run_phase1(population_input: Dict[str, Any],
         "documents": [_doc_snapshot(d) for d in documents],
         "trials_found": [asdict(t) for t in all_trials],
         "publications_found": [asdict(p) for p in all_publications]})
+    _snapshot(debug_capture, "A7b_comparator_followup", {"attempts": followup_attempts})
 
     out.validation.records_extracted = len(records)
     _snapshot(debug_capture, "A8_extraction", [r.to_dict() for r in records])
@@ -374,7 +461,36 @@ def run_phase1(population_input: Dict[str, Any],
     opts.emit("A11", "Resolving comparator substance identity")
     identities, a11_excluded = validation.resolve_identities(usable, providers.llm)
     validation.apply_identities(usable, identities)
-    _snapshot(debug_capture, "A11_identity", {k: asdict(v) for k, v in identities.items()})
+
+    # ---- A11b (identity audit) ---------------------------------------------
+    # A second, narrower LLM call over A11's own already-resolved output --
+    # mirrors A12's "generate broadly, then a separate precise pass" split.
+    # Catches cross-language/cross-source duplicates precluster_candidates()
+    # can never catch (purely literal-token-based) and A11's single
+    # generate+dedupe call sometimes misses.
+    opts.emit("A11b", "Auditing resolved identities for cross-language duplicates")
+    merges = validation.audit_resolved_identities(identities, providers.llm)
+    validation.apply_identity_merges(usable, identities, merges)
+
+    distinct_by_key: Dict[str, Any] = {}
+    for comp in identities.values():
+        distinct_by_key.setdefault(validation.identity_key(comp), comp)
+    canonical_by_loser_key = {loser: canonical for loser, canonical, _reason in merges}
+    identity_snapshot = {}
+    for k, v in identities.items():
+        entry = asdict(v)
+        canonical_key = canonical_by_loser_key.get(validation.identity_key(v))
+        canonical = distinct_by_key.get(canonical_key) if canonical_key else None
+        entry["audit_merged_into"] = canonical.as_stated if canonical else ""
+        identity_snapshot[k] = entry
+    _snapshot(debug_capture, "A11_identity", identity_snapshot)
+    _snapshot(debug_capture, "A11b_identity_audit", {
+        "merges": [{"loser_display_name": distinct_by_key[loser].as_stated
+                                          if loser in distinct_by_key else loser,
+                   "canonical_display_name": distinct_by_key[canonical].as_stated
+                                            if canonical in distinct_by_key else canonical,
+                   "reason": reason}
+                  for loser, canonical, reason in merges]})
     _snapshot(debug_capture, "A11_excluded", a11_excluded)
     for e in a11_excluded:
         out.validation.excluded.append({

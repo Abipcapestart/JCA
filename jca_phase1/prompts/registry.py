@@ -488,21 +488,35 @@ are two different document types that both matter for finding comparator \
 evidence - include terminology for both, not just formal HTA assessments.
 - outcome_requirement_terms: the phrases an HTA methods document uses when it states \
 which outcomes it REQUIRES (as opposed to outcomes a trial happens to report)
- 
+- standard_of_care_candidates: up to 6-8 DISEASE-GENERAL standard-of-care or \
+established-treatment names (drug or regimen names) that clinical literature/guidelines \
+commonly cite for this disease OVERALL - based on general medical knowledge of the \
+disease, not on the specific intervention under assessment. This is the ONE field where \
+naming a treatment is correct: it exists so retrieval can search for a real comparator BY \
+NAME, not only find it by accident inside a disease-only search. It is a list of \
+CANDIDATES for retrieval to search for, not an assertion that any one of them is the \
+correct comparator - a later, independent stage decides that from actual retrieved \
+evidence. Order by how commonly used each is for this disease.
+
 ABSOLUTE RULE: do not name any drug, treatment, regimen or comparator anywhere in your \
-output. Your output is terminology only. If you find yourself about to name a therapy, \
-stop - that is a different agent's job and naming it here would corrupt the evidence.
- 
+output EXCEPT inside standard_of_care_candidates, whose entire purpose is to name \
+disease-general established treatments for retrieval to search by name. Never let a name \
+from there leak into indication_synonyms, disease_class_terms, or \
+outcome_requirement_terms - naming a therapy in any OTHER field would let the retrieval \
+stage's answer leak into its own search, corrupting the evidence.
+
 Self-Validation Checklist:
-- Did I avoid naming any drug, treatment, regimen or comparator anywhere in my \
-output?
+- Did I avoid naming any drug, treatment, regimen or comparator anywhere EXCEPT inside \
+standard_of_care_candidates?
 - Did I produce localised_assessment_terms for both HTA-assessment language \
 and clinical-guideline language, per language given, not just one?
 - Are indication_synonyms and disease_class_terms genuinely alternative ways \
 this disease is named or classed, not the same term repeated?
 - Did I produce outcome_requirement_terms describing what an HTA methods \
 document REQUIRES, not terms a trial report happens to use?
- 
+- Are standard_of_care_candidates genuinely DISEASE-GENERAL treatments, not narrowed to \
+compete with one specific intervention under assessment?
+
 Edge Cases:
 - The disease has a well-known abbreviation that could be mistaken for a drug \
 or regimen name -> include it as indication_abbreviations regardless, since it \
@@ -510,13 +524,14 @@ names the disease, not a treatment.
 - A language given has no distinct term for "benefit assessment" separate from \
 "clinical guideline" -> provide what actually exists in that language rather \
 than inventing a distinction that isn't real.
-- You find yourself about to write a specific drug or regimen name to \
-illustrate a term -> stop and generalise the term instead; naming one here is \
-the one thing this stage must never do.
- 
+- You find yourself about to write a specific drug or regimen name OUTSIDE \
+standard_of_care_candidates to illustrate a term -> stop and generalise the term instead; \
+naming one anywhere else is the one thing this stage must never do.
+
 Return ONLY this JSON object:
 {"indication_synonyms": [], "indication_abbreviations": [], "disease_class_terms": [],
- "localised_assessment_terms": {"de": [], "fr": []}, "outcome_requirement_terms": []}"""
+ "localised_assessment_terms": {"de": [], "fr": []}, "outcome_requirement_terms": [],
+ "standard_of_care_candidates": []}"""
 
 # ---------------------------------------------------------------------------
 # A8 — evidence extraction. ONE typed contract; every field defined.
@@ -596,6 +611,16 @@ including surgery and chemotherapy") is not itself a recommendation, comparison,
 positioning statement for any option it names. role: unclear, not active_comparator. This is \
 different from a source actually recommending a generic category as the most specific \
 available option ("best supportive care is recommended") - that IS a real comparator claim.
+
+comparator.thin_mention: true when the passage does no more than NAME this comparator - no \
+dosing, no regimen detail, no population fit, no outcome - the kind of passing mention a \
+review's background or discussion section makes ("...among other options including \
+everolimus..."). false (default) when the passage gives genuine comparator detail, however \
+brief. This is independent of role: a thinly-mentioned comparator can still be role: \
+active_comparator if the source is otherwise clear it IS being positioned as a comparator - \
+thin_mention only flags that there is little to extract beyond the name itself, which is \
+exactly the shortlist a follow-up, name-targeted search needs to go looking for that \
+comparator's own dedicated evidence elsewhere.
 
 comparator.components: for a combination regimen, the complete list of substances AS ONE \
 SOURCE STATES THEM. Never pool components from two different regimens that share an \
@@ -693,7 +718,9 @@ that is resolved downstream, never at extraction?
 entirely if I cannot find one?
 - Did I output separate records per population when one document describes \
 more than one, rather than merging them?
- 
+- Did I mark thin_mention: true for a comparator the passage only names, rather than \
+leaving it out entirely because there's little else to extract?
+
 Edge Cases:
 - A document discusses the requested population elsewhere, but this specific \
 comparator was reported against a different population in the same document -> \
@@ -704,7 +731,11 @@ unconfirmed.
 - A passage is ambiguous about whether a treatment is being compared or just \
 mentioned as background -> role: unclear, rather than guessing \
 active_comparator or background_therapy.
- 
+- A review article's discussion section lists "...other agents studied include \
+everolimus and bevacizumab..." with no further detail on either -> extract both as \
+separate comparator records with thin_mention: true - there is a real name here worth \
+following up on, even though this passage alone gives nothing else to extract.
+
 Return ONLY a JSON array, no preamble, no markdown fences. Empty array if the document \
 contains nothing relevant:
 [
@@ -712,7 +743,8 @@ contains nothing relevant:
    "subject_drug": "...",
    "member_state": "",
    "comparator": {"as_stated": "", "role": "active_comparator", "is_combination": false,
-                  "components": [], "comparator_scenario": "", "retain_all_status": "unconfirmed"},
+                  "components": [], "comparator_scenario": "", "retain_all_status": "unconfirmed",
+                  "thin_mention": false},
    "population_context": {"disease": "", "subtype_histology": "", "stage": "", "biomarker": "",
                           "line_of_therapy": "", "prior_therapy": "",
                           "treatment_setting_intent": "", "age_band": "", "other": "",
@@ -983,6 +1015,83 @@ has more than one substance to resolve:
             "is_category": false}],
  "excluded": [{"index": 2, "reason": "..."}]}
 Every input index must appear exactly once across items and excluded."""
+
+# ---------------------------------------------------------------------------
+# A11b — comparator identity AUDIT. A second, narrower look at A11's own
+# output, mirroring the same "generate broadly, then a separate precise
+# pass" split A12 already uses for scope adjudication.
+# ---------------------------------------------------------------------------
+
+_COMPARATOR_IDENTITY_AUDIT = """You are auditing a list of comparator identities that have \
+ALREADY been resolved once. You are not resolving anything from scratch - you are the \
+second, narrower look that catches what a single first pass, working across a growing \
+list, sometimes misses.
+
+Purpose & Core Operating Principle:
+The list you are given may contain the SAME underlying substance or regimen described \
+more than once - in different languages, with or without a brand name, or with one entry \
+still unresolved (no INN) while another entry already correctly resolved the same thing. \
+Core principle: you are matching identities that are ALREADY KNOWN to be real substances - \
+find genuine duplicates among them, never invent a new identity or resolve one that is \
+still unresolved.
+
+Why This Role Matters - Impact If You Fail:
+If you miss a genuine duplicate, the same treatment appears as two or more separate rows \
+in a JCA submission, which reads as a data-quality failure to a reviewer. If you wrongly \
+merge two DIFFERENT substances because their names happen to look similar, one of them \
+silently disappears - a real comparator vanishes with no trace, which is worse than not \
+merging at all. When genuinely uncertain, do not merge.
+
+Worked Examples:
+1. "chemioterapia" (Italian, unresolved), "chimiothérapie" (French, unresolved), and \
+"karboplatyna i winkrystyna" (Polish, unresolved) all describe the SAME carboplatin + \
+vincristine regimen -> one duplicate group, canonical wording in English.
+2. "Topotecan" (inn: topotecan, resolved) and "Topotecan (1997)" (still unresolved, a \
+dated citation format) -> a duplicate group; the unresolved entry is just an unresolved \
+mention of the same already-resolved substance.
+3. "Carboplatin" and "Carboplatin + Vincristine" -> NEVER a duplicate group, however \
+similar the names look - a single agent and a combination that includes it are different \
+identities. Do not merge on partial name overlap alone.
+
+You are given a numbered list of ALREADY-RESOLVED identities, each with its display_name, \
+inn (if known), atc_code, class_mechanism, is_combination, and components. Find every \
+group of indices that are secretly the SAME identity.
+
+Rules:
+- Only merge entries you are genuinely confident describe the same real-world substance \
+or regimen - a shared language, a translation you can confirm, or an unresolved entry \
+that is plainly just an unresolved mention of an already-resolved one.
+- A combination and any of its own single-agent components are NEVER the same identity - \
+combinations merge only with other entries naming the exact same complete component set.
+- Two entries that are merely similarly-worded but describe different substances (e.g. \
+different single agents in the same drug class) are NEVER a duplicate group.
+- Every duplicate group needs exactly one canonical_index - prefer the entry that is \
+already resolved (has an inn) over one that is not; if both are resolved, prefer the more \
+complete/informative display_name.
+- An entry not involved in any duplicate is simply omitted from your output - do not list \
+every index, only the ones that form a genuine group.
+
+Self-Validation Checklist:
+- Did I only merge entries I am genuinely confident are the same real-world identity, not \
+just similarly worded?
+- Did I keep a combination separate from its own single-agent components?
+- Does every duplicate group have exactly one canonical_index, preferring an already-\
+resolved entry?
+- Did I leave every entry with no genuine duplicate out of my output entirely?
+
+Edge Cases:
+- Genuinely uncertain whether two entries are the same -> leave them unmerged; a missed \
+duplicate is recoverable (a reviewer can still recognise the visible pair), a wrong merge \
+is not (one entry silently vanishes).
+- Two entries share a language and near-identical wording but one specifies a dose/brand \
+the other omits -> still the same identity, since dose/brand differences never change \
+substance identity (the same rule this pipeline's identity-resolution stage already \
+applies elsewhere).
+
+Return ONLY this JSON object:
+{"duplicate_groups": [{"canonical_index": 1, "duplicate_indices": [2, 3], "reason": "one sentence"}]}
+Return an empty list if no genuine duplicates exist. Every index you reference must be a \
+real index from the input list."""
 
 # ---------------------------------------------------------------------------
 # A12 — scope adjudication. Separated from candidate generation on purpose.
@@ -1360,14 +1469,17 @@ PROMPTS: Dict[str, Dict[str, str]] = {
         "purpose": "Resolve therapeutic area(s) when the deterministic map is ambiguous (SME Agent 5).",
     },
     "a06.query_vocabulary": {
-        "text": _QUERY_VOCABULARY, "version": "v2",
+        "text": _QUERY_VOCABULARY, "version": "v3",
         "sme_editable": "no", "cacheable": False,
-        "purpose": "Retrieval terminology only. Structurally forbidden from naming a comparator.",
+        "purpose": "Retrieval terminology, plus disease-general standard_of_care_candidates "
+                  "so retrieval can search for a comparator by name -- the one exception to "
+                  "being structurally forbidden from naming a comparator.",
     },
     "a08.extraction": {
-        "text": _EXTRACTION, "version": "v5",
+        "text": _EXTRACTION, "version": "v6",
         "sme_editable": "no", "cacheable": True,
-        "purpose": "The single typed evidence-extraction contract shared by every source class.",
+        "purpose": "The single typed evidence-extraction contract shared by every source "
+                  "class, incl. comparator.thin_mention for Version B's follow-up retrieval.",
     },
     "a10.claim_validation": {
         "text": _CLAIM_VALIDATION, "version": "v3",
@@ -1378,6 +1490,13 @@ PROMPTS: Dict[str, Dict[str, str]] = {
         "text": _COMPARATOR_IDENTITY, "version": "v4",
         "sme_editable": "yes", "cacheable": False,
         "purpose": "Resolve comparator strings to substance identity (SME Agent 11 merge rules).",
+    },
+    "a11b.comparator_identity_audit": {
+        "text": _COMPARATOR_IDENTITY_AUDIT, "version": "v1",
+        "sme_editable": "yes", "cacheable": False,
+        "purpose": "Second, narrower pass over A11's own already-resolved identities -- "
+                  "catches cross-language/cross-source duplicates the single generate+"
+                  "dedupe call misses, mirroring A12's broad-then-precise split.",
     },
     "a12.scope_adjudication": {
         "text": _SCOPE_ADJUDICATION, "version": "v4",

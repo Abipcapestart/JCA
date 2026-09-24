@@ -548,7 +548,8 @@ def resolve_identities(records: Sequence[EvidenceRecord], llm: Optional[LLMClien
             batch = unresolved[start:start + batch_size]
             payload = "\n".join(f"{i + 1}. {n}" for i, n in enumerate(batch))
             parsed = llm.call_json("a11.comparator_identity", payload,
-                                   max_tokens=4000, default=None)
+                                   max_tokens=C.LLM.comparator_identity_max_tokens,
+                                   default=None)
             if not parsed:
                 continue
             for item in parsed.get("items", []) or []:
@@ -640,6 +641,34 @@ def filter_a11_excluded(records: Sequence[EvidenceRecord],
            if not (r.comparator and _normalise(r.comparator.as_stated) in excluded_norm)]
 
 
+def _copy_identity_fields(target: Comparator, source: Comparator) -> None:
+    """Copy one resolved identity's fields onto another comparator object.
+
+    Shared by apply_identities() (propagating A11's per-string resolution
+    onto every precluster variant) and apply_identity_merges() (propagating
+    the A11b audit's cross-identity merge decision onto every record of the
+    "loser" identity) -- factored out so the two merge paths can never drift
+    apart on which fields get copied.
+    """
+    target.inn = source.inn
+    target.atc_code = source.atc_code
+    target.class_mechanism = source.class_mechanism
+    target.class_source = source.class_source
+    target.is_combination = source.is_combination or target.is_combination
+    if source.components:
+        target.components = source.components
+    # Propagate the cluster's canonical display wording too, not just its
+    # substance identity -- without this, a category/generic comparator
+    # with no INN (e.g. "standard of care") still fragments at A14's
+    # identity_key() fallback, because that key uses as_stated when inn
+    # is empty, and as_stated was never unified across variants here.
+    # Preserve the original wording first (build_comparator() needs it
+    # for aliases_merged) -- once overwritten below it's gone for good.
+    if not target.raw_as_stated:
+        target.raw_as_stated = target.as_stated
+    target.as_stated = source.as_stated or target.as_stated
+
+
 def apply_identities(records: Sequence[EvidenceRecord],
                      identities: Dict[str, Comparator]) -> None:
     for rec in records:
@@ -648,23 +677,7 @@ def apply_identities(records: Sequence[EvidenceRecord],
         ident = identities.get(_normalise(rec.comparator.as_stated))
         if not ident:
             continue
-        rec.comparator.inn = ident.inn
-        rec.comparator.atc_code = ident.atc_code
-        rec.comparator.class_mechanism = ident.class_mechanism
-        rec.comparator.class_source = ident.class_source
-        rec.comparator.is_combination = ident.is_combination or rec.comparator.is_combination
-        if ident.components:
-            rec.comparator.components = ident.components
-        # Propagate the cluster's canonical display wording too, not just its
-        # substance identity -- without this, a category/generic comparator
-        # with no INN (e.g. "standard of care") still fragments at A14's
-        # identity_key() fallback, because that key uses as_stated when inn
-        # is empty, and as_stated was never unified across variants here.
-        # Preserve the original wording first (build_comparator() needs it
-        # for aliases_merged) -- once overwritten below it's gone for good.
-        if not rec.comparator.raw_as_stated:
-            rec.comparator.raw_as_stated = rec.comparator.as_stated
-        rec.comparator.as_stated = ident.as_stated or rec.comparator.as_stated
+        _copy_identity_fields(rec.comparator, ident)
 
 
 def identity_key(comp: Comparator) -> str:
@@ -678,6 +691,86 @@ def identity_key(comp: Comparator) -> str:
     if comp.inn:
         return _normalise(comp.inn)
     return _normalise(comp.as_stated)
+
+
+def audit_resolved_identities(identities: Dict[str, Comparator],
+                              llm: Optional[LLMClient]
+                              ) -> List[Tuple[str, str, str]]:
+    """A11b — a SECOND, narrower LLM call over A11's own already-resolved
+    output, mirroring A12's "generate broadly, then a separate precise pass"
+    split. resolve_identities()'s single call does both generation and
+    deduplication over a growing list; precluster_candidates() is purely
+    literal-token-based and can NEVER catch a cross-language duplicate
+    ("chemioterapia"/"chimiothérapie"/"karboplatyna i winkrystyna" naming the
+    same regimen in three languages) -- only a second, focused look at the
+    DISTINCT resolved identities themselves can.
+
+    Returns (loser_key, canonical_key, reason) tuples, keyed by
+    identity_key(), for apply_identity_merges() to apply -- reason is the
+    LLM's own one-sentence justification, carried through purely for Excel
+    auditability. Deliberately NOT batched: the input is already the
+    distinct, deduped identity set (typically well under 40), a different
+    shape of problem from A11's own unresolved-string batches.
+    """
+    if llm is None:
+        return []
+    distinct: Dict[str, Comparator] = {}
+    for comp in identities.values():
+        distinct.setdefault(identity_key(comp), comp)
+    keys = list(distinct.keys())
+    if len(keys) < 2:
+        return []
+
+    lines = []
+    for i, key in enumerate(keys, start=1):
+        comp = distinct[key]
+        lines.append(f"{i}. display_name={comp.as_stated!r}, inn={comp.inn!r}, "
+                     f"atc_code={comp.atc_code!r}, class_mechanism={comp.class_mechanism!r}, "
+                     f"is_combination={comp.is_combination}, components={comp.components!r}")
+    payload = "\n".join(lines)
+    parsed = llm.call_json("a11b.comparator_identity_audit", payload,
+                           max_tokens=C.LLM.comparator_identity_audit_max_tokens,
+                           default=None)
+    if not parsed:
+        return []
+
+    merges: List[Tuple[str, str, str]] = []
+    for group in parsed.get("duplicate_groups", []) or []:
+        canonical_idx = group.get("canonical_index")
+        duplicate_idxs = group.get("duplicate_indices") or []
+        reason = (group.get("reason") or "").strip()
+        if not isinstance(canonical_idx, int) or not (1 <= canonical_idx <= len(keys)):
+            continue
+        canonical_key = keys[canonical_idx - 1]
+        for idx in duplicate_idxs:
+            if isinstance(idx, int) and 1 <= idx <= len(keys) and idx != canonical_idx:
+                merges.append((keys[idx - 1], canonical_key, reason))
+    return merges
+
+
+def apply_identity_merges(records: Sequence[EvidenceRecord],
+                          identities: Dict[str, Comparator],
+                          merges: Sequence[Tuple[str, str, str]]) -> None:
+    """Apply audit_resolved_identities()'s merge decisions onto every record
+    of the "loser" identity, rewriting it to the canonical identity's fields.
+    Runs AFTER apply_identities() and BEFORE group_comparators() (A14), so a
+    merged identity lands in the same group from the start -- no downstream
+    stage needs to know an audit merge happened."""
+    if not merges:
+        return
+    by_key: Dict[str, Comparator] = {}
+    for comp in identities.values():
+        by_key.setdefault(identity_key(comp), comp)
+    canonical_by_loser = {loser: by_key[canonical] for loser, canonical, _reason in merges
+                          if canonical in by_key}
+    if not canonical_by_loser:
+        return
+    for rec in records:
+        if not rec.comparator:
+            continue
+        canonical = canonical_by_loser.get(identity_key(rec.comparator))
+        if canonical is not None:
+            _copy_identity_fields(rec.comparator, canonical)
 
 
 # ===========================================================================

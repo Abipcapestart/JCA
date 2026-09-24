@@ -356,7 +356,8 @@ def _compose_comparator_rationale(c: ConsolidatedComparator,
                f"TIERS REPRESENTED: {c.tiers}\n"
                f"RECOMMENDATION STRENGTH: {c.recommendation_strength}\n")
     try:
-        return llm.call("a16.comparator_rationale", payload, max_tokens=300).strip()
+        return llm.call("a16.comparator_rationale", payload,
+                        max_tokens=C.LLM.comparator_rationale_max_tokens).strip()
     except Exception:  # noqa: BLE001
         return (f"{c.generic_name} is included at {c.line_of_therapy.lower()}; "
                 f"rationale could not be composed automatically.")
@@ -478,7 +479,8 @@ def _compose_outcome_rationale(o: ConsolidatedOutcome, llm: Optional[LLMClient])
                f"STATED AS A SCOPE REQUIREMENT: "
                f"{'yes' if o.requirement_type else 'no — reported result only'}\n")
     try:
-        return llm.call("a16.outcome_rationale", payload, max_tokens=200).strip()
+        return llm.call("a16.outcome_rationale", payload,
+                        max_tokens=C.LLM.outcome_rationale_max_tokens).strip()
     except Exception:  # noqa: BLE001
         return f"{o.concept} is included as a {o.category.lower()} outcome."
 

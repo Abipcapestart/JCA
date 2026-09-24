@@ -36,10 +36,10 @@ from ..providers.registries import (LiteratureClient, PublicationRecord,
 from ..providers.search import SearchHit, SearchProvider, select_balanced
 from ..schema import (Comparator, EvidenceRecord, FINDING_COMPARATOR, FINDING_OUTCOME,
                       Intervention, LeakageGuard, LicensedIndicationRecord,
-                      OutcomeMention, PASS_DRUG_ANCHORED, PASS_LANDSCAPE,
-                      PASS_OUTCOME_REQUIREMENT, PASS_REFINEMENT, Population,
-                      PopulationContext, QueryPlanItem, QueryVocabulary,
-                      RetrievedDocument, ScopeBoundary, SourceClassAttempt)
+                      OutcomeMention, PASS_COMPARATOR_ANCHORED, PASS_COMPARATOR_FOLLOWUP,
+                      PASS_DRUG_ANCHORED, PASS_LANDSCAPE, PASS_OUTCOME_REQUIREMENT,
+                      PASS_REFINEMENT, Population, PopulationContext, QueryPlanItem,
+                      QueryVocabulary, RetrievedDocument, ScopeBoundary, SourceClassAttempt)
 from ..sources.workbook import SourceInventory, normalise_domain
 from .a09_a13_validation import _coerce_component_names
 
@@ -98,6 +98,7 @@ def build_vocabulary(population: Population, areas: Sequence[str],
     abbreviations: List[str] = []
     disease_class_terms: List[str] = []
     outcome_requirement_terms: List[str] = []
+    soc_candidates: List[str] = []
     localised: Dict[str, List[str]] = {}
 
     batches = ([languages[i:i + _VOCAB_LANGUAGE_BATCH_SIZE]
@@ -130,6 +131,7 @@ def build_vocabulary(population: Population, areas: Sequence[str],
         abbreviations.extend(parsed.get("indication_abbreviations") or [])
         disease_class_terms.extend(parsed.get("disease_class_terms") or [])
         outcome_requirement_terms.extend(parsed.get("outcome_requirement_terms") or [])
+        soc_candidates.extend(parsed.get("standard_of_care_candidates") or [])
         batch_localised = parsed.get("localised_assessment_terms") or {}
         for k, v in batch_localised.items():
             if isinstance(v, list):
@@ -140,9 +142,16 @@ def build_vocabulary(population: Population, areas: Sequence[str],
     vocab.disease_class_terms = _dedup(disease_class_terms)
     vocab.outcome_requirement_terms = _dedup(outcome_requirement_terms)
     vocab.localised_assessment_terms = {k: _dedup(v) for k, v in localised.items()}
+    # Capped, disease-specific shortlist -- NOT the full INN vocabulary. a08
+    # extraction is already ~88% of a run's LLM cost, so this stays bounded
+    # regardless of how many candidates the model names across batches.
+    vocab.standard_of_care_candidates = _dedup(soc_candidates)[
+        :C.RETRIEVAL.max_comparator_candidates]
 
     # Safety net. If the model named something that looks like a drug, drop it —
-    # the vocabulary must not carry an answer.
+    # the vocabulary must not carry an answer. Deliberately does NOT touch
+    # standard_of_care_candidates: naming a treatment there is correct, not a
+    # leak -- that field exists specifically so retrieval can search by name.
     vocab = _strip_possible_drug_names(vocab)
     return vocab
 
@@ -189,6 +198,44 @@ def _build_anchored_disease_query(vocab: QueryVocabulary, condition: str) -> str
         return anchor_term
     other_query = " OR ".join(f'"{s}"' if " " in s else s for s in other_terms)
     return f"{anchor_term} AND ({other_query})"
+
+
+def _build_comparator_anchored_query(candidate: str, disease_query: str) -> str:
+    """Anchor on the CANDIDATE's own name (PubMed field-tag syntax, same
+    technique _build_anchored_disease_query uses to anchor on the disease),
+    ANDed with the same disease term set every other PubMed pass already
+    builds -- finds a comparator's own literature by name instead of hoping
+    it ranks inside a disease-only search. Confirmed real gap: two GT
+    comparators (Everolimus, Bevacizumab+chemo) had zero hits anywhere in
+    retrieval because no PubMed query ever named a candidate comparator."""
+    term = f'"{candidate}"[Title/Abstract]' if " " in candidate else f"{candidate}[Title/Abstract]"
+    return f"{term} AND ({disease_query})"
+
+
+def pubmed_comparator_followup(candidates: Sequence[str], literature: Optional[LiteratureClient],
+                               vocab: QueryVocabulary, condition: str,
+                               drug: str = "") -> List[PublicationRecord]:
+    """Version B's PubMed half: one name-anchored search per candidate that
+    organically surfaced from real round-1 evidence with only a thin
+    mention. Reuses _build_comparator_anchored_query() and the same
+    disease-term-set construction retrieve_structured()'s own queries use,
+    so this follow-up round is built exactly the same way as the rest of the
+    PubMed passes, just called a second time with a different candidate
+    source (thin_mention names, not standard_of_care_candidates)."""
+    if literature is None or not C.RETRIEVAL.enable_comparator_followup_round or not candidates:
+        return []
+    drug_tokens = _tokens(drug) if drug else set()
+    bounded = [c for c in candidates if _tokens(c) != drug_tokens][
+        :C.RETRIEVAL.max_comparator_candidates]
+    if not bounded:
+        return []
+    synonym_terms = _dedup([condition] + (vocab.indication_synonyms or []))
+    disease_query = " OR ".join(f'"{s}"' if " " in s else s for s in synonym_terms)
+    pubs: List[PublicationRecord] = []
+    for candidate in bounded:
+        query = _build_comparator_anchored_query(candidate, disease_query)
+        pubs += literature.search(query, max_results=10)
+    return pubs
 
 
 def plan_queries(population: Population, intervention: Intervention,
@@ -303,6 +350,27 @@ def plan_queries(population: Population, intervention: Intervention,
             note=("Outcomes an assessment REQUIRES, which is a different object from "
                   "outcomes a trial happens to report.")))
 
+    # -- Comparator-name-anchored: search for a candidate comparator BY NAME -
+    # Additive only -- runs once at GENERAL_EVIDENCE scope, NOT inside the
+    # 27-member-state loop above, to keep cost bounded regardless of
+    # vocabulary size (see C.RETRIEVAL.max_comparator_candidates). Existing
+    # drug-anchored and disease-only landscape passes are untouched; this
+    # closes the real gap those two still had: a comparator that never ranks
+    # inside a disease-only search never got a query naming it at all.
+    # Confirmed real gap: two GT comparators (Everolimus, Bevacizumab+chemo)
+    # had zero hits anywhere in retrieval across multiple runs.
+    drug_tokens = _tokens(drug)
+    comparator_candidates = [c for c in (vocab.standard_of_care_candidates or [])
+                             if _tokens(c) != drug_tokens][:C.RETRIEVAL.max_comparator_candidates]
+    if guide_any:
+        for candidate in comparator_candidates:
+            plan.append(QueryPlanItem(
+                query=f'"{candidate}" {primary}',
+                source_class=C.SRC_CLINICAL_GUIDELINE, member_state=C.GENERAL_EVIDENCE,
+                pass_type=PASS_COMPARATOR_ANCHORED, domains=guide_any, max_urls=2,
+                note=(f"Comparator-name-anchored: searches for {candidate!r} by name, "
+                      "not just disease terms a landscape query hopes it ranks under.")))
+
     # -- Tier 3 -------------------------------------------------------------
     if C.ENABLE_TIER_3_GENERAL_WEB:
         plan.append(QueryPlanItem(
@@ -348,6 +416,37 @@ def plan_refinement(gaps: Sequence[Tuple[str, str]], population: Population,
             source_class=source_class, member_state=state,
             pass_type=PASS_REFINEMENT, domains=domains, max_urls=2,
             note="Refinement round: broadened terms after a coverage gap."))
+    return out
+
+
+def plan_comparator_followup(candidates: Sequence[str], population: Population,
+                             intervention: Intervention, areas: Sequence[str],
+                             inventory: SourceInventory) -> List[QueryPlanItem]:
+    """Version B: ONE additional, name-targeted query per candidate that
+    organically surfaced from real round-1 evidence with only a thin mention
+    (comparator.thin_mention) -- not a guessed candidate (that's
+    standard_of_care_candidates/PASS_COMPARATOR_ANCHORED, a separate, earlier
+    pass). Mirrors plan_refinement()'s shape: gated, bounded, additive-only,
+    runs once at GENERAL_EVIDENCE scope, never inside the 27-member-state
+    loop, so cost stays bounded regardless of how many thin mentions a real
+    run surfaces (see C.RETRIEVAL.max_comparator_candidates)."""
+    if not C.RETRIEVAL.enable_comparator_followup_round or not candidates:
+        return []
+    drug = intervention.product_name
+    indication = population.value("indication_disease")
+    drug_tokens = _tokens(drug)
+    bounded = [c for c in candidates if _tokens(c) != drug_tokens][
+        :C.RETRIEVAL.max_comparator_candidates]
+    guide_domains = inventory.domains(C.SRC_CLINICAL_GUIDELINE, areas=areas)
+    out: List[QueryPlanItem] = []
+    if guide_domains:
+        for candidate in bounded:
+            out.append(QueryPlanItem(
+                query=f'"{candidate}" {indication}',
+                source_class=C.SRC_CLINICAL_GUIDELINE, member_state=C.GENERAL_EVIDENCE,
+                pass_type=PASS_COMPARATOR_FOLLOWUP, domains=guide_domains, max_urls=2,
+                note=(f"Follow-up: {candidate!r} surfaced from real evidence with only a "
+                      "thin mention -- searching for its own dedicated evidence by name.")))
     return out
 
 
@@ -561,6 +660,19 @@ def retrieve_structured(population: Population, intervention: Intervention,
             # synonym list became -- exactly why a real comparator kept not
             # surfacing even after fetch volume and synonym coverage improved.
             pubs += literature.search(broad_query, max_results=15)
+            # Comparator-name-anchored pass: search for a candidate BY NAME,
+            # ANDed against the same disease term set every other pass uses
+            # -- additive only, and bounded to a small disease-specific
+            # shortlist (see C.RETRIEVAL.max_comparator_candidates) rather
+            # than the full INN vocabulary.
+            drug_tokens = _tokens(drug)
+            comparator_candidates = [
+                c for c in (vocab.standard_of_care_candidates or [])
+                if _tokens(c) != drug_tokens][:C.RETRIEVAL.max_comparator_candidates]
+            comparator_queries = [_build_comparator_anchored_query(c, disease_query)
+                                  for c in comparator_candidates]
+            for q in comparator_queries:
+                pubs += literature.search(q, max_results=10)
             seen, deduped = set(), []
             for p in pubs:
                 if p.pmid and p.pmid not in seen:
@@ -576,6 +688,10 @@ def retrieve_structured(population: Population, intervention: Intervention,
                 f"[1 drug-anchored] {main_query} | "
                 f"[2 guideline-restricted: Practice Guideline/Guideline] {broad_query} | "
                 f"[3 landscape, unrestricted] {broad_query}")
+            if comparator_queries:
+                query_detail += (
+                    f" | [4 comparator-anchored: {'; '.join(comparator_candidates)}] "
+                    + " ; ".join(comparator_queries))
             out.attempts.append(SourceClassAttempt(
                 member_state=C.GENERAL_EVIDENCE, source_class=C.SRC_PUBMED,
                 attempted=True, documents_retrieved=len(deduped),
@@ -888,7 +1004,8 @@ def _records_from_parsed_items(parsed_items: List[Dict[str, Any]],
                 is_combination=bool(cmp_block.get("is_combination")),
                 components=_coerce_component_names(cmp_block.get("components")),
                 comparator_scenario=cmp_block.get("comparator_scenario") or "",
-                retain_all_status=cmp_block.get("retain_all_status") or C.RETAIN_UNCONFIRMED)
+                retain_all_status=cmp_block.get("retain_all_status") or C.RETAIN_UNCONFIRMED,
+                thin_mention=bool(cmp_block.get("thin_mention")))
             # INVARIANT 1, enforced at the boundary: extraction never sets a
             # comparator class, whatever the model returned.
             rec.comparator.class_mechanism = ""

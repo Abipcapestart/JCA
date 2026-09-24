@@ -29,6 +29,14 @@ def _headers(ws):
 
 
 class TestRecordRowEvidenceFields(unittest.TestCase):
+    """Looked up by header name, not trailing position -- _RECORD_HEADERS has
+    grown twice since these fields were added (thin_mention, then the
+    population_context/recommendation_strength/etc. batch), so pinning a
+    fixed tail slice breaks on every future addition for no real reason."""
+
+    def _row_by_header(self, row):
+        return dict(zip(excel_export._RECORD_HEADERS, row))
+
     def test_record_row_includes_the_four_sme_requested_fields(self):
         row = excel_export._record_row({
             "finding_id": "f1", "finding_type": "comparator", "subject_drug": "DrugX",
@@ -36,13 +44,18 @@ class TestRecordRowEvidenceFields(unittest.TestCase):
             "evidence_status": "conference_abstract", "data_maturity": "interim",
             "trial_status": "TERMINATED", "peer_review_status": "preprint",
         })
-        self.assertEqual(row[-4:], ["conference_abstract", "interim", "TERMINATED", "preprint"])
+        by_header = self._row_by_header(row)
+        self.assertEqual(by_header["evidence_status"], "conference_abstract")
+        self.assertEqual(by_header["data_maturity"], "interim")
+        self.assertEqual(by_header["trial_status"], "TERMINATED")
+        self.assertEqual(by_header["peer_review_status"], "preprint")
         self.assertEqual(len(row), len(excel_export._RECORD_HEADERS))
 
-    def test_record_headers_name_the_four_fields_at_the_end(self):
-        self.assertEqual(excel_export._RECORD_HEADERS[-4:],
-                         ["evidence_status", "data_maturity", "trial_status",
-                          "peer_review_status"])
+    def test_record_headers_name_the_four_fields(self):
+        for name in ("evidence_status", "data_maturity", "trial_status",
+                    "peer_review_status"):
+            self.assertIn(name, excel_export._RECORD_HEADERS)
+        self.assertIn("thin_mention", excel_export._RECORD_HEADERS)
 
 
 class TestQueryPlanTierColumn(unittest.TestCase):
@@ -91,6 +104,100 @@ class TestQueryPlanTierColumn(unittest.TestCase):
         self.assertIn("guideline-restricted", detail)
         self.assertIn("landscape", detail)
         self.assertEqual(row[headers.index("tier")], C.TIER_OF_SOURCE_CLASS[C.SRC_PUBMED])
+
+
+class TestHighPriorityCompletenessGapsClosed(unittest.TestCase):
+    """2026-09-24 completeness audit: fields that exist in the data model but
+    were printed on ZERO sheets. Covers the high-priority subset only --
+    population_context/recommendation_strength/retrieval_method/doc metadata
+    on the shared debug-record sheets, the AUDITED completeness matrix,
+    Phase1Output.notes, Intervention's resolved identity, and
+    member_state_summary."""
+
+    def test_record_row_carries_population_context_and_doc_metadata(self):
+        row = excel_export._record_row({
+            "finding_id": "cmp-1", "finding_type": "comparator", "subject_drug": "DrugX",
+            "recommendation_strength": "preferred", "retrieval_method": "tavily_search",
+            "document_title": "ESMO Guideline", "document_date": "2024",
+            "population_context": {"disease": "SCLC", "stage": "extensive-stage",
+                                   "line_of_therapy": "second-line"},
+        })
+        by_header = dict(zip(excel_export._RECORD_HEADERS, row))
+        self.assertIn("SCLC", by_header["population_context"])
+        self.assertIn("extensive-stage", by_header["population_context"])
+        self.assertIn("second-line", by_header["population_context"])
+        self.assertEqual(by_header["recommendation_strength"], "preferred")
+        self.assertEqual(by_header["retrieval_method"], "tavily_search")
+        self.assertEqual(by_header["document_title"], "ESMO Guideline")
+        self.assertEqual(by_header["document_date"], "2024")
+
+    def test_record_row_carries_outcome_specific_fields_only_for_outcomes(self):
+        outcome_row = excel_export._record_row({
+            "finding_id": "out-1", "finding_type": "outcome",
+            "outcome": {"measure": "ORR", "unit": "%", "instrument": "RECIST",
+                       "is_requirement": True},
+        })
+        by_header = dict(zip(excel_export._RECORD_HEADERS, outcome_row))
+        self.assertEqual(by_header["outcome_unit"], "%")
+        self.assertEqual(by_header["outcome_instrument"], "RECIST")
+        self.assertTrue(by_header["outcome_is_requirement"])
+
+        comparator_row = excel_export._record_row({
+            "finding_id": "cmp-1", "finding_type": "comparator",
+            "comparator": {"as_stated": "Topotecan"},
+        })
+        by_header2 = dict(zip(excel_export._RECORD_HEADERS, comparator_row))
+        self.assertIsNone(by_header2["outcome_unit"])
+
+    def test_a17_source_class_matrix_sheet_reads_the_audited_completeness_field(self):
+        run = {"output": {"comparators": [], "outcomes": {},
+                          "completeness": {"source_class_matrix": [
+                              {"member_state": "Austria", "source_class": C.SRC_HTA_REGULATORY,
+                               "attempted": True, "documents_retrieved": 2,
+                               "status": "found", "detail": ""}]}},
+              "debug_capture": {}}
+        wb = _load(run)
+        self.assertIn("A17 Source Class Matrix (Det)", wb.sheetnames)
+        ws = wb["A17 Source Class Matrix (Det)"]
+        row = list(ws.iter_rows(min_row=2, values_only=True))[0]
+        headers = _headers(ws)
+        self.assertEqual(row[headers.index("member_state")], "Austria")
+        self.assertEqual(row[headers.index("documents_retrieved")], 2)
+
+    def test_run_notes_sheet_surfaces_operational_warnings(self):
+        run = {"output": {"comparators": [], "outcomes": {},
+                          "notes": ["[A10] Claim validation skipped: it requires both an "
+                                   "LLM and a search provider."]},
+              "debug_capture": {}}
+        wb = _load(run)
+        self.assertIn("Run Notes", wb.sheetnames)
+        ws = wb["Run Notes"]
+        row = list(ws.iter_rows(min_row=2, values_only=True))[0]
+        self.assertIn("Claim validation skipped", row[0])
+
+    def test_run_summary_includes_member_state_summary(self):
+        run = {"output": {"comparators": [], "outcomes": {},
+                          "member_state_summary": {"identified_count": 5,
+                                                   "not_identified_count": 22, "total": 27}},
+              "debug_capture": {}}
+        wb = _load(run)
+        ws = wb["Run Summary"]
+        rows = {r[0]: r[1] for r in ws.iter_rows(min_row=2, values_only=True)}
+        self.assertEqual(rows["member_states_identified"], 5)
+        self.assertEqual(rows["member_states_not_identified"], 22)
+        self.assertEqual(rows["member_states_total"], 27)
+
+    def test_a2_intervention_sheet_includes_resolved_identity(self):
+        run = {"output": {"comparators": [], "outcomes": {},
+                          "intervention": {"fields": {}, "inn_resolved": "tovorafenib",
+                                          "atc_code": "L01EX23", "user_confirmed": True}},
+              "debug_capture": {}}
+        wb = _load(run)
+        ws = wb["A2 Intervention Fields (Mix)"]
+        rows = {r[0]: r[1] for r in ws.iter_rows(min_row=2, values_only=True)}
+        self.assertEqual(rows["inn_resolved"], "tovorafenib")
+        self.assertEqual(rows["atc_code"], "L01EX23")
+        self.assertTrue(rows["user_confirmed"])
 
 
 if __name__ == "__main__":

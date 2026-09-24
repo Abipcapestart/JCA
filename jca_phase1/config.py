@@ -328,6 +328,20 @@ class RetrievalSettings:
     # Per-request document cache. The same URL is otherwise fetched by
     # extraction, by the retry path and again by re-fetch validation.
     enable_document_cache: bool = True
+    # Cap on how many QueryVocabulary.standard_of_care_candidates get their
+    # own comparator-name-anchored query pass. Bounded deliberately -- a08
+    # extraction is already ~88% of a run's LLM cost, so this must stay a
+    # small, disease-specific shortlist (from A6's own LLM research), not the
+    # full INN vocabulary. Runs once per candidate at GENERAL_EVIDENCE scope,
+    # never inside the 27-member-state loop.
+    max_comparator_candidates: int = 6
+    # Version B: a comparator name that organically surfaced from real
+    # round-1 evidence but with only a thin mention (comparator.thin_mention)
+    # gets ONE additional, name-targeted follow-up retrieval round -- closes
+    # the gap standard_of_care_candidates can't reach (a comparator the LLM's
+    # prior knowledge doesn't already associate with this disease, but real
+    # evidence just named). Shares max_comparator_candidates as its cap.
+    enable_comparator_followup_round: bool = True
 
 
 RETRIEVAL = RetrievalSettings()
@@ -373,6 +387,52 @@ class LLMSettings:
                                                     # truncating -- needs more
                                                     # headroom than a10, not the same
     indication_synthesis_max_tokens: int = 1500   # was inline 600
+    # Was inline 4000 in resolve_identities() -- the one prompt this exact
+    # fix pattern missed. Confirmed real defect: with a batch of many
+    # unresolved comparator candidates (foreign-language wordings, brand
+    # names, dated citations), a11's response truncates at exactly the old
+    # 4000-token cap, so every candidate past the cutoff never gets a
+    # resolved identity at all -- it falls to the "unresolved" catch-all,
+    # keeps its own untranslated wording, and can never merge with its true
+    # duplicates (precluster_candidates() is purely literal-token-based, so
+    # cross-language variants can ONLY be unified by this LLM call itself).
+    comparator_identity_max_tokens: int = 8000
+    # a11b.comparator_identity_audit -- a SECOND, focused call over the
+    # already-resolved, already-deduped identity list (mirrors A12's
+    # "retrieval is broad, adjudication is precise" split, applied to
+    # identity merging). Catches cross-language/cross-source duplicates
+    # A11's own single generate+dedupe call sometimes misses -- e.g.
+    # "chemioterapia"/"chimiothérapie"/"karboplatyna i winkrystyna" naming
+    # the same regimen in three languages, which precluster_candidates()
+    # can NEVER catch (purely literal-token-based, no translation
+    # awareness). Input is small (distinct identities only, typically well
+    # under 40), so this stays modest relative to comparator_identity_max_tokens.
+    comparator_identity_audit_max_tokens: int = 4000
+
+    # Full audit sweep across every remaining call site (2026-09-24): these 7
+    # were STILL bare literals scattered in agent files, the exact same
+    # unmonitored-truncation shape that caused every fix above -- centralized
+    # and given real headroom, not left at whatever number was convenient
+    # when first written. None of these are meaningful cost drivers
+    # (a08.extraction alone is ~88% of a run's LLM spend), so raising them
+    # costs virtually nothing while closing a real, silent failure mode.
+    pi_validation_max_tokens: int = 3000            # was inline 2000
+    input_structuring_max_tokens: int = 6000        # was inline 4000 -- builds
+                                                      # every population AND
+                                                      # intervention field in one
+                                                      # JSON object, the densest
+                                                      # output among this batch
+    scope_facet_normalise_max_tokens: int = 3000    # was inline 1500
+    indication_lock_max_tokens: int = 3000          # was inline 1500 -- parses
+                                                      # a real fetched document's
+                                                      # indication wording, which
+                                                      # can run longer than a
+                                                      # short free-text field
+    area_adjudication_max_tokens: int = 2000        # was inline 800
+    comparator_rationale_max_tokens: int = 600      # was inline 300 -- "one
+                                                      # sentence" output, low risk,
+                                                      # raised for headroom anyway
+    outcome_rationale_max_tokens: int = 500         # was inline 200
 
 
 LLM = LLMSettings()

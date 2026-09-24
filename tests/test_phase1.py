@@ -418,6 +418,50 @@ class TestQueryPlanning(unittest.TestCase):
         for item in landscape:
             self.assertNotIn(inter.product_name.lower(), item.query.lower())
 
+    def _plan_with_candidates(self, candidates):
+        pop = Population()
+        pop.fields["indication_disease"] = Field(value="small cell lung cancer",
+                                                 provenance="confirmed")
+        for k in inputs.POPULATION_FIELDS:
+            pop.fields.setdefault(k, Field())
+        inter = Intervention()
+        inter.fields["product_name_inn"] = Field(value="Examplimab", provenance="confirmed")
+        for k in inputs.INTERVENTION_FIELDS:
+            inter.fields.setdefault(k, Field())
+        vocab = retrieval.build_vocabulary(pop, ["Oncology"], None)
+        vocab.standard_of_care_candidates = candidates
+        return retrieval.plan_queries(pop, inter, ["Oncology"], vocab, self.inv), inter
+
+    def test_comparator_anchored_pass_uses_candidate_name_not_the_drug(self):
+        """Real gap: two GT comparators (Everolimus, Bevacizumab+chemo) had
+        zero hits anywhere in retrieval, because no query path -- including
+        the disease-only landscape pass -- ever named a candidate comparator.
+        This pass runs once per candidate at GENERAL_EVIDENCE scope, NOT
+        inside the 27-member-state loop, to keep cost bounded."""
+        plan, inter = self._plan_with_candidates(["Topotecan", "Irinotecan"])
+        anchored = [i for i in plan if i.pass_type == retrieval.PASS_COMPARATOR_ANCHORED]
+        self.assertEqual(len(anchored), 2)
+        for item in anchored:
+            self.assertEqual(item.member_state, C.GENERAL_EVIDENCE)
+        self.assertTrue(any("Topotecan" in i.query for i in anchored))
+        self.assertTrue(any("Irinotecan" in i.query for i in anchored))
+
+    def test_comparator_anchored_pass_count_scales_with_candidates_not_member_states(self):
+        plan_one, _ = self._plan_with_candidates(["Topotecan"])
+        plan_two, _ = self._plan_with_candidates(["Topotecan", "Irinotecan"])
+        one_count = len([i for i in plan_one if i.pass_type == retrieval.PASS_COMPARATOR_ANCHORED])
+        two_count = len([i for i in plan_two if i.pass_type == retrieval.PASS_COMPARATOR_ANCHORED])
+        self.assertEqual(one_count, 1)
+        self.assertEqual(two_count, 2, "must scale with candidate count, not 27x per candidate")
+
+    def test_comparator_anchored_pass_excludes_the_requested_drug(self):
+        plan, inter = self._plan_with_candidates(["Examplimab", "Topotecan"])
+        anchored = [i for i in plan if i.pass_type == retrieval.PASS_COMPARATOR_ANCHORED]
+        self.assertEqual(len(anchored), 1,
+                         "the requested drug itself must never get its own "
+                         "comparator-anchored query")
+        self.assertIn("Topotecan", anchored[0].query)
+
     def test_query_vocabulary_is_batched_by_language_not_one_giant_call(self):
         """Run 4 post-fix validation: even at the raised 4000-token cap,
         a06.query_vocabulary hit 100% truncation because requesting
@@ -454,6 +498,41 @@ class TestQueryPlanning(unittest.TestCase):
         # Language-independent fields, requested redundantly in every batch,
         # must still come out deduplicated rather than repeated per batch.
         self.assertEqual(vocab.disease_class_terms, ["lung cancer"])
+
+    def test_standard_of_care_candidates_are_capped_and_not_stripped_as_drug_names(self):
+        """standard_of_care_candidates is the ONE deliberate exception to
+        QueryVocabulary's "never name a drug" guarantee -- it must survive
+        _strip_possible_drug_names() untouched (unlike disease_class_terms/
+        indication_synonyms/outcome_requirement_terms, which DO get
+        drug-like entries stripped), and must stay capped at
+        C.RETRIEVAL.max_comparator_candidates even if the model names more
+        across batches, since a08 extraction is already ~88% of a run's
+        LLM cost."""
+        pop = Population()
+        pop.fields["indication_disease"] = Field(value="small cell lung cancer",
+                                                 provenance="confirmed")
+        for k in inputs.POPULATION_FIELDS:
+            pop.fields.setdefault(k, Field())
+
+        # "Topotecan" ends in a drug-like suffix ("...tecan") that
+        # _strip_possible_drug_names would remove from disease_class_terms --
+        # it must survive here specifically because this field is exempt.
+        def fake_response(user_prompt):
+            return json.dumps({
+                "indication_synonyms": [], "indication_abbreviations": [],
+                "disease_class_terms": [], "outcome_requirement_terms": [],
+                "localised_assessment_terms": {},
+                "standard_of_care_candidates": [
+                    "Topotecan", "Irinotecan", "Amrubicin", "Lurbinectedin",
+                    "Bendamustine", "Docetaxel", "Gemcitabine", "Paclitaxel"]})
+
+        llm = ScriptedLLM({"a06.query_vocabulary": fake_response})
+        vocab = retrieval.build_vocabulary(pop, ["Oncology"], llm)
+        self.assertLessEqual(len(vocab.standard_of_care_candidates),
+                             C.RETRIEVAL.max_comparator_candidates)
+        self.assertIn("Topotecan", vocab.standard_of_care_candidates,
+                     "a drug-like name must survive in THIS field -- naming a "
+                     "treatment here is correct, not a leak")
 
     def test_eu_wide_epar_query_carries_the_line_of_therapy_hint(self):
         """Fix 6: the EMA/EPAR pass is where the Vinblastine/CV evidence was
@@ -509,6 +588,105 @@ class TestQueryPlanning(unittest.TestCase):
         joined = " ".join(vocab.indication_synonyms + vocab.disease_class_terms).lower()
         self.assertNotIn("topotecan", joined)
         self.assertNotIn("osimertinib", joined)
+
+
+# ===========================================================================
+# Version B — comparator follow-up round (name-targeted second retrieval)
+# ===========================================================================
+
+class TestComparatorFollowupPlanning(unittest.TestCase):
+    """plan_comparator_followup(): ONE additional, name-targeted query per
+    candidate that organically surfaced from real round-1 evidence with only
+    a thin mention (comparator.thin_mention) -- not a guessed candidate
+    (that's standard_of_care_candidates/PASS_COMPARATOR_ANCHORED, a separate,
+    earlier pass). Mirrors plan_refinement()'s shape: gated, bounded,
+    additive-only, runs once at GENERAL_EVIDENCE scope."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.inv = load_source_inventory(FIXTURE_WORKBOOK, strict=False)
+
+    def _pop_and_inter(self):
+        pop = Population()
+        pop.fields["indication_disease"] = Field(value="small cell lung cancer",
+                                                 provenance="confirmed")
+        for k in inputs.POPULATION_FIELDS:
+            pop.fields.setdefault(k, Field())
+        inter = Intervention()
+        inter.fields["product_name_inn"] = Field(value="Examplimab", provenance="confirmed")
+        for k in inputs.INTERVENTION_FIELDS:
+            inter.fields.setdefault(k, Field())
+        return pop, inter
+
+    def test_one_query_per_candidate_at_general_evidence_scope(self):
+        pop, inter = self._pop_and_inter()
+        plan = retrieval.plan_comparator_followup(
+            ["Everolimus", "Bevacizumab"], pop, inter, ["Oncology"], self.inv)
+        self.assertEqual(len(plan), 2)
+        for item in plan:
+            self.assertEqual(item.pass_type, retrieval.PASS_COMPARATOR_FOLLOWUP)
+            self.assertEqual(item.member_state, C.GENERAL_EVIDENCE)
+        self.assertTrue(any("Everolimus" in i.query for i in plan))
+        self.assertTrue(any("Bevacizumab" in i.query for i in plan))
+
+    def test_excludes_a_candidate_matching_the_requested_drug(self):
+        pop, inter = self._pop_and_inter()
+        plan = retrieval.plan_comparator_followup(
+            ["Examplimab", "Everolimus"], pop, inter, ["Oncology"], self.inv)
+        self.assertEqual(len(plan), 1)
+        self.assertIn("Everolimus", plan[0].query)
+
+    def test_no_candidates_produces_no_plan(self):
+        pop, inter = self._pop_and_inter()
+        self.assertEqual(retrieval.plan_comparator_followup([], pop, inter, ["Oncology"],
+                                                            self.inv), [])
+
+    def test_disabled_flag_produces_no_plan(self):
+        pop, inter = self._pop_and_inter()
+        original = C.RETRIEVAL.enable_comparator_followup_round
+        C.RETRIEVAL.enable_comparator_followup_round = False
+        try:
+            plan = retrieval.plan_comparator_followup(
+                ["Everolimus"], pop, inter, ["Oncology"], self.inv)
+        finally:
+            C.RETRIEVAL.enable_comparator_followup_round = original
+        self.assertEqual(plan, [])
+
+    def test_capped_at_max_comparator_candidates(self):
+        pop, inter = self._pop_and_inter()
+        many = [f"Drug{i}" for i in range(10)]
+        plan = retrieval.plan_comparator_followup(many, pop, inter, ["Oncology"], self.inv)
+        self.assertLessEqual(len(plan), C.RETRIEVAL.max_comparator_candidates)
+
+
+class TestPubMedFollowupQuery(unittest.TestCase):
+
+    def test_one_pubmed_search_per_candidate(self):
+        from jca_phase1.schema import QueryVocabulary
+        client = _RecordingLiteratureClient()
+        vocab = QueryVocabulary(indication_synonyms=["pediatric low-grade glioma"])
+        retrieval.pubmed_comparator_followup(
+            ["Everolimus", "Bevacizumab"], client, vocab, "paediatric low-grade glioma")
+        self.assertEqual(len(client.queries), 2)
+        everolimus_query, _ = client.queries[0]
+        self.assertIn("Everolimus[Title/Abstract]", everolimus_query)
+        self.assertIn(" AND (", everolimus_query)
+
+    def test_excludes_candidate_matching_the_drug(self):
+        from jca_phase1.schema import QueryVocabulary
+        client = _RecordingLiteratureClient()
+        vocab = QueryVocabulary(indication_synonyms=["pediatric low-grade glioma"])
+        retrieval.pubmed_comparator_followup(
+            ["Tovorafenib", "Everolimus"], client, vocab, "paediatric low-grade glioma",
+            drug="Tovorafenib")
+        self.assertEqual(len(client.queries), 1)
+        self.assertIn("Everolimus", client.queries[0][0])
+
+    def test_no_literature_client_returns_empty(self):
+        from jca_phase1.schema import QueryVocabulary
+        result = retrieval.pubmed_comparator_followup(
+            ["Everolimus"], None, QueryVocabulary(), "SCLC")
+        self.assertEqual(result, [])
 
 
 # ===========================================================================
@@ -726,6 +904,106 @@ class TestPubMedLandscapePass(unittest.TestCase):
         self.assertIn("pediatric low-grade glioma", detail)
         self.assertIn("guideline-restricted", detail)
         self.assertIn("landscape", detail)
+
+
+class TestExtractionThinMentionPromptSchema(unittest.TestCase):
+    """a08.extraction v5 -> v6: adds comparator.thin_mention, seeding Version
+    B's name-targeted follow-up retrieval round."""
+
+    def test_v6_prompt_names_thin_mention(self):
+        from jca_phase1.prompts import registry
+        text, version = registry.get("a08.extraction")
+        self.assertEqual(version, "v6")
+        self.assertIn("comparator.thin_mention", text)
+        self.assertIn('"thin_mention": false', text,
+                     "the JSON schema block must include the new field")
+
+
+class TestComparatorIdentityAuditPromptSchema(unittest.TestCase):
+    """a11b.comparator_identity_audit: a new, separate prompt id -- mirrors
+    how a12.scope_adjudication is its own registry entry distinct from A11,
+    not a version bump on a11.comparator_identity."""
+
+    def test_prompt_exists_with_expected_schema(self):
+        from jca_phase1.prompts import registry
+        text, version = registry.get("a11b.comparator_identity_audit")
+        self.assertEqual(version, "v1")
+        self.assertEqual(registry.versions()["a11b.comparator_identity_audit"], "v1")
+        self.assertIn('"duplicate_groups"', text)
+        self.assertIn("canonical_index", text)
+        self.assertIn("duplicate_indices", text)
+
+
+class TestQueryVocabularyPromptSchema(unittest.TestCase):
+    """a06.query_vocabulary v2 -> v3: adds the one deliberate exception to
+    'never name a drug' -- standard_of_care_candidates -- so retrieval can
+    search for a comparator by name."""
+
+    def test_v3_prompt_names_the_new_field_and_its_exception(self):
+        from jca_phase1.prompts import registry
+        text, version = registry.get("a06.query_vocabulary")
+        self.assertEqual(version, "v3")
+        self.assertEqual(registry.versions()["a06.query_vocabulary"], "v3")
+        self.assertIn("standard_of_care_candidates", text)
+        self.assertIn('"standard_of_care_candidates": []', text,
+                     "the JSON schema block must include the new field")
+        self.assertIn("EXCEPT inside standard_of_care_candidates", text,
+                     "the ABSOLUTE RULE must carve out this one exception explicitly")
+
+
+class TestPubMedComparatorAnchoredPass(unittest.TestCase):
+    """Real gap: two GT comparators (Everolimus, Bevacizumab+chemo) had zero
+    hits anywhere in retrieval across multiple runs, because every query path
+    was anchored on the requested drug or the disease alone -- never on a
+    candidate comparator's own name. QueryVocabulary.standard_of_care_
+    candidates (from a06.query_vocabulary) now feeds one additional,
+    name-anchored PubMed query per candidate."""
+
+    def _run(self, standard_of_care_candidates=None):
+        from jca_phase1.schema import LicensedIndicationRecord, QueryVocabulary
+        pop = Population(fields={"indication_disease": Field(value="paediatric low-grade glioma",
+                                                              provenance="confirmed")})
+        inter = Intervention(fields={"product_name_inn": Field(value="Tovorafenib",
+                                                               provenance="confirmed")})
+        vocab = QueryVocabulary(indication_synonyms=["pediatric low-grade glioma"],
+                                standard_of_care_candidates=standard_of_care_candidates or [])
+        client = _RecordingLiteratureClient()
+        result = retrieval.retrieve_structured(pop, inter, LicensedIndicationRecord(),
+                                               None, client, vocab)
+        return client.queries, result
+
+    def test_no_candidates_issues_exactly_the_original_three_queries(self):
+        """Regression guard: this pass must be purely additive."""
+        queries, _ = self._run()
+        self.assertEqual(len(queries), 3)
+
+    def test_one_extra_anchored_query_per_candidate(self):
+        queries, _ = self._run(standard_of_care_candidates=["Everolimus", "Bevacizumab"])
+        self.assertEqual(len(queries), 5)
+        everolimus_query, _ = queries[3]
+        bevacizumab_query, _ = queries[4]
+        self.assertIn("Everolimus[Title/Abstract]", everolimus_query)
+        self.assertIn(" AND (", everolimus_query)
+        self.assertIn("Bevacizumab[Title/Abstract]", bevacizumab_query)
+
+    def test_a_candidate_matching_the_requested_drug_is_excluded(self):
+        queries, _ = self._run(standard_of_care_candidates=["Tovorafenib", "Everolimus"])
+        self.assertEqual(len(queries), 4,
+                         "the requested drug itself must never get its own comparator-"
+                         "anchored query -- that's what query 1 already is")
+        candidate_query, _ = queries[3]
+        self.assertIn("Everolimus", candidate_query)
+
+    def test_query_detail_includes_candidates_only_when_present(self):
+        _, result = self._run(standard_of_care_candidates=["Everolimus"])
+        detail = next(a for a in result.attempts if a.source_class == C.SRC_PUBMED).detail
+        self.assertIn("comparator-anchored", detail)
+        self.assertIn("Everolimus", detail)
+
+        _, result_empty = self._run()
+        detail_empty = next(a for a in result_empty.attempts
+                            if a.source_class == C.SRC_PUBMED).detail
+        self.assertNotIn("comparator-anchored", detail_empty)
 
 
 class TestPubMedXMLParsing(unittest.TestCase):
@@ -1223,6 +1501,78 @@ class TestPreclusterCandidates(unittest.TestCase):
         self.assertIn("surgery and chemotherapy (generic)", excluded_values)
 
 
+class TestComparatorIdentityAudit(unittest.TestCase):
+    """A11b: a SECOND, narrower LLM call over A11's own already-resolved
+    identities, mirroring A12's "generate broadly, then a separate precise
+    pass" split. precluster_candidates() is purely literal-token-based and
+    can NEVER catch a cross-language duplicate ("chemioterapia"/
+    "chimiothérapie"/"karboplatyna i winkrystyna" naming the same regimen in
+    three languages) -- only this second, focused look at the DISTINCT
+    resolved identities can."""
+
+    def _resolved(self, as_stated, inn="", class_mechanism="", class_source="unresolved"):
+        return Comparator(as_stated=as_stated, inn=inn, class_mechanism=class_mechanism,
+                          class_source=class_source)
+
+    def test_cross_language_duplicates_are_merged(self):
+        identities = {
+            "chemioterapia": self._resolved("chemioterapia"),
+            "chimiotherapie": self._resolved("chimiothérapie"),
+            "karboplatyna i winkrystyna": self._resolved("karboplatyna i winkrystyna"),
+        }
+        llm = ScriptedLLM({"a11b.comparator_identity_audit": json.dumps({
+            "duplicate_groups": [{"canonical_index": 1, "duplicate_indices": [2, 3],
+                                  "reason": "same carboplatin+vincristine regimen, "
+                                           "three languages"}]})})
+        merges = validation.audit_resolved_identities(identities, llm)
+        self.assertEqual(len(merges), 2)
+        loser_keys = {loser for loser, _canonical, _reason in merges}
+        canonical_keys = {canonical for _loser, canonical, _reason in merges}
+        self.assertEqual(canonical_keys, {"chemioterapia"})
+        self.assertEqual(loser_keys, {"chimiotherapie", "karboplatyna i winkrystyna"})
+        self.assertTrue(all(reason for _l, _c, reason in merges))
+
+    def test_fewer_than_two_distinct_identities_skips_the_call_entirely(self):
+        """No wasted spend on a trivial case -- nothing to audit against."""
+        identities = {"topotecan": self._resolved("Topotecan", inn="topotecan")}
+        llm = ScriptedLLM({"a11b.comparator_identity_audit": lambda _: json.dumps(
+            {"duplicate_groups": []})})
+        merges = validation.audit_resolved_identities(identities, llm)
+        self.assertEqual(merges, [])
+        self.assertEqual(len(llm.seen), 0)
+
+    def test_apply_identity_merges_unifies_identity_key(self):
+        """Direct proof the audit's merge decision actually closes the
+        fragmentation gap: records citing different loser wordings must
+        share ONE identity_key() after the merge is applied, exactly like
+        this session's as_stated-propagation fix proved for precluster-level
+        duplicates."""
+        canonical = self._resolved("chemioterapia")
+        loser_a = self._resolved("chimiothérapie")
+        loser_b = self._resolved("karboplatyna i winkrystyna")
+        identities = {"chemioterapia": canonical, "chimiotherapie": loser_a,
+                      "karboplatyna i winkrystyna": loser_b}
+        records = [
+            _record(finding_id="cmp-0", comparator=Comparator(as_stated="chemioterapia")),
+            _record(finding_id="cmp-1", comparator=Comparator(as_stated="chimiothérapie")),
+            _record(finding_id="cmp-2",
+                   comparator=Comparator(as_stated="karboplatyna i winkrystyna")),
+        ]
+        for rec, ident in zip(records, [canonical, loser_a, loser_b]):
+            validation._copy_identity_fields(rec.comparator, ident)
+
+        merges = [("chimiotherapie", "chemioterapia", "same regimen"),
+                 ("karboplatyna i winkrystyna", "chemioterapia", "same regimen")]
+        validation.apply_identity_merges(records, identities, merges)
+        keys = {validation.identity_key(rec.comparator) for rec in records}
+        self.assertEqual(len(keys), 1, f"expected one shared identity_key, got {keys}")
+
+    def test_no_merges_is_a_no_op(self):
+        records = [_record(comparator=Comparator(as_stated="Topotecan", inn="topotecan"))]
+        validation.apply_identity_merges(records, {}, [])
+        self.assertEqual(records[0].comparator.inn, "topotecan")
+
+
 class TestComparatorIdentity(unittest.TestCase):
 
     def test_class_comes_from_the_comparators_own_inn(self):
@@ -1348,6 +1698,45 @@ class TestComparatorIdentity(unittest.TestCase):
         self.assertTrue(recs)
         self.assertEqual(recs[0].comparator.class_mechanism, "",
                          "extraction must never populate a comparator class")
+
+    def test_extraction_parses_thin_mention_flag(self):
+        """Version B: a comparator named only in passing (no dosing/regimen/
+        outcome detail) must be flagged thin_mention=True, seeding the
+        follow-up retrieval round -- confirms the flag survives from the
+        raw a08.extraction JSON onto the built Comparator."""
+        doc_text = "Other agents studied include everolimus, among others."
+        llm = ScriptedLLM({"a08.extraction": json.dumps([{
+            "finding_type": "comparator", "subject_drug": "Examplimab",
+            "comparator": {"as_stated": "Everolimus", "role": "unclear",
+                          "thin_mention": True},
+            "population_context": {"disease": "pLGG"},
+            "evidence_quote": "Other agents studied include everolimus"}])})
+        from jca_phase1.schema import RetrievedDocument
+        doc = RetrievedDocument(url="https://x.org/review", resolved_url="https://x.org/review",
+                                text=doc_text, ok=True, source_class=C.SRC_HTA_REGULATORY)
+        pop = Population(fields={"indication_disease": Field(value="pLGG", provenance="confirmed")})
+        inter = Intervention(fields={"product_name_inn": Field(value="Examplimab",
+                                                               provenance="confirmed")})
+        recs = retrieval._extract_one(doc, pop, inter, llm)
+        self.assertTrue(recs)
+        self.assertTrue(recs[0].comparator.thin_mention)
+
+    def test_extraction_defaults_thin_mention_to_false(self):
+        doc_text = "Topotecan 1.5 mg/m2 was given as second-line therapy."
+        llm = ScriptedLLM({"a08.extraction": json.dumps([{
+            "finding_type": "comparator", "subject_drug": "Examplimab",
+            "comparator": {"as_stated": "Topotecan", "role": "active_comparator"},
+            "population_context": {"disease": "SCLC"},
+            "evidence_quote": doc_text}])})
+        from jca_phase1.schema import RetrievedDocument
+        doc = RetrievedDocument(url="https://x.org/a", resolved_url="https://x.org/a",
+                                text=doc_text, ok=True, source_class=C.SRC_HTA_REGULATORY)
+        pop = Population(fields={"indication_disease": Field(value="SCLC", provenance="confirmed")})
+        inter = Intervention(fields={"product_name_inn": Field(value="Examplimab",
+                                                               provenance="confirmed")})
+        recs = retrieval._extract_one(doc, pop, inter, llm)
+        self.assertTrue(recs)
+        self.assertFalse(recs[0].comparator.thin_mention)
 
     def test_extraction_also_coerces_rich_component_objects(self):
         """Same defensive fix applied at the a08.extraction boundary, since
@@ -1971,13 +2360,35 @@ class TestTokenCapCentralization(unittest.TestCase):
     caps were inline literals scattered across agent files, which is exactly
     what let this drift unnoticed for three runs. Centralized onto C.LLM and
     raised; this test pins both facts: the caps exist with adequate headroom,
-    and each call site actually references them rather than a literal."""
+    and each call site actually references them rather than a literal.
+
+    a11.comparator_identity was the one prompt this fix pattern initially
+    missed (found in a later validation run: exactly one a11 call, output
+    truncated at the old flat 4000, leaving real resolvable drugs and
+    cross-language duplicate wordings stuck "unresolved" -- precluster_
+    candidates() is purely literal-token-based, so those duplicates could
+    only ever be unified by this LLM call itself, never deterministically)."""
 
     def test_new_caps_exist_with_real_headroom_over_the_old_ones(self):
         self.assertGreaterEqual(C.LLM.query_vocabulary_max_tokens, 3000)
         self.assertGreaterEqual(C.LLM.scope_adjudication_max_tokens, 4000)
         self.assertGreaterEqual(C.LLM.outcome_harmonization_max_tokens, 8000)
         self.assertGreaterEqual(C.LLM.indication_synthesis_max_tokens, 1500)
+        self.assertGreaterEqual(C.LLM.comparator_identity_max_tokens, 8000)
+        self.assertGreaterEqual(C.LLM.comparator_identity_audit_max_tokens, 4000)
+
+    def test_full_audit_sweep_caps_exist_with_headroom_over_the_old_literals(self):
+        """2026-09-24 full sweep: 7 more call sites were still bare literals
+        scattered across agent files, the same unmonitored-truncation shape
+        as every fix above. Pins each new cap has real headroom over its old
+        inline value (2000/4000/1500/1500/800/300/200 respectively)."""
+        self.assertGreaterEqual(C.LLM.pi_validation_max_tokens, 2500)
+        self.assertGreaterEqual(C.LLM.input_structuring_max_tokens, 5000)
+        self.assertGreaterEqual(C.LLM.scope_facet_normalise_max_tokens, 2000)
+        self.assertGreaterEqual(C.LLM.indication_lock_max_tokens, 2000)
+        self.assertGreaterEqual(C.LLM.area_adjudication_max_tokens, 1000)
+        self.assertGreaterEqual(C.LLM.comparator_rationale_max_tokens, 400)
+        self.assertGreaterEqual(C.LLM.outcome_rationale_max_tokens, 300)
 
     def test_extraction_cap_raised_with_matching_read_timeout_headroom(self):
         """The extraction cap was raised for headroom on one unusually dense
@@ -1997,16 +2408,48 @@ class TestTokenCapCentralization(unittest.TestCase):
 
     def test_call_sites_reference_the_config_not_a_literal(self):
         import inspect
-        from jca_phase1.agents import a06_a08_retrieval, a09_a13_validation, a14_a18_consolidation
+        from jca_phase1.agents import (a01_a05_input_context, a06_a08_retrieval,
+                                       a09_a13_validation, a14_a18_consolidation)
         sources = {
             "a06.query_vocabulary": inspect.getsource(a06_a08_retrieval.build_vocabulary),
             "a12.scope_adjudication": inspect.getsource(a09_a13_validation.adjudicate_scope),
+            "a11.comparator_identity": inspect.getsource(a09_a13_validation.resolve_identities),
         }
         for prompt_id, src in sources.items():
             self.assertIn("C.LLM.", src, f"{prompt_id} still hardcodes max_tokens")
         consolidation_src = inspect.getsource(a14_a18_consolidation)
         self.assertIn("C.LLM.outcome_harmonization_max_tokens", consolidation_src)
         self.assertIn("C.LLM.indication_synthesis_max_tokens", consolidation_src)
+        self.assertIn("C.LLM.comparator_rationale_max_tokens", consolidation_src)
+        self.assertIn("C.LLM.outcome_rationale_max_tokens", consolidation_src)
+
+        input_context_src = inspect.getsource(a01_a05_input_context)
+        for name in ("pi_validation_max_tokens", "input_structuring_max_tokens",
+                    "scope_facet_normalise_max_tokens", "indication_lock_max_tokens",
+                    "area_adjudication_max_tokens"):
+            self.assertIn(f"C.LLM.{name}", input_context_src,
+                         f"a01_a05_input_context.py still hardcodes {name}")
+
+    def test_no_literal_max_tokens_remain_anywhere_in_the_package(self):
+        """Direct proof of the full sweep, not just the specific call sites
+        checked above: grep every agent/provider source file for a bare
+        integer max_tokens= literal. Catches any call site future code adds
+        without going through C.LLM, not just the ones known today."""
+        import re as re_module
+        import jca_phase1
+        import os
+        pkg_dir = os.path.dirname(jca_phase1.__file__)
+        offenders = []
+        for root, _dirs, files in os.walk(pkg_dir):
+            for fname in files:
+                if not fname.endswith(".py") or fname == "config.py":
+                    continue  # config.py IS where the named literals live
+                path = os.path.join(root, fname)
+                with open(path, encoding="utf-8") as f:
+                    src = f.read()
+                for m in re_module.finditer(r"max_tokens\s*=\s*\d+", src):
+                    offenders.append(f"{path}: {m.group(0)}")
+        self.assertEqual(offenders, [], f"literal max_tokens found: {offenders}")
 
 
 class TestGenericAndForwardLookingMentionGuidance(unittest.TestCase):
@@ -2020,7 +2463,7 @@ class TestGenericAndForwardLookingMentionGuidance(unittest.TestCase):
 
     def test_extraction_prompt_addresses_forward_looking_and_generic_mentions(self):
         text, version = prompt_registry.get("a08.extraction")
-        self.assertEqual(version, "v5")
+        self.assertEqual(version, "v6")
         self.assertIn("FORWARD-LOOKING TRIAL COMMITMENTS", text)
         self.assertIn("GENERIC BACKGROUND SCENE-SETTING", text)
 
@@ -2040,7 +2483,7 @@ class TestSMEv8Reconciliation(unittest.TestCase):
 
     def test_a08_has_all_three_sme_paragraphs_and_our_own_addition(self):
         text, version = prompt_registry.get("a08.extraction")
-        self.assertEqual(version, "v5")
+        self.assertEqual(version, "v6")
         self.assertIn("MULTIPLE COMPARATORS NAMED TOGETHER", text)
         self.assertIn("MULTIPLE OUTCOMES NAMED TOGETHER", text)
         self.assertIn("COMPARATOR AND OUTCOME INFORMATION IN STRUCTURED FORMAT", text)
@@ -2085,11 +2528,16 @@ class TestSMEv8Reconciliation(unittest.TestCase):
 
     def test_identical_prompts_are_untouched(self):
         """Prompts confirmed identical between our registry and SME's v7/v8
-        doc must show no version churn from this reconciliation."""
+        doc must show no version churn from this reconciliation. Note:
+        a06.query_vocabulary was v2 here (untouched by the v7/v8
+        reconciliation) but has since been intentionally bumped to v3 by a
+        later, unrelated fix (standard_of_care_candidates, for comparator-
+        name-anchored retrieval -- see TestQueryVocabularyPromptSchema) and
+        is deliberately excluded from this list now."""
         for prompt_id, expected_version in [
             ("a01.pi_validation", "v2"), ("a02.input_structuring", "v2"),
             ("a03.scope_facet_normalise", "v2"), ("a04.indication_lock", "v2"),
-            ("a05.area_adjudication", "v2"), ("a06.query_vocabulary", "v2"),
+            ("a05.area_adjudication", "v2"),
             ("a16.comparator_rationale", "v2"), ("a16.outcome_rationale", "v2"),
             ("a16.indication_synthesis", "v2"),
         ]:
@@ -3068,6 +3516,199 @@ class TestRefinementRoundWiring(unittest.TestCase):
                                      providers, orch.RunOptions())
 
         self.assertEqual(len(execute_plan_calls), 1)
+
+
+class TestComparatorFollowupRoundWiring(unittest.TestCase):
+    """Version B: a comparator named only in passing in round 1
+    (comparator.thin_mention) must trigger ONE additional, name-targeted
+    execute_plan() call, whose own extracted record reaches result.records
+    before A9/A10 -- exactly the plan_refinement() pattern, applied to a
+    different trigger signal."""
+
+    def _fixture(self):
+        pop = Population(population_id=POP_LICENSED,
+                         fields={"indication_disease": Field(value="LGG", provenance="confirmed")})
+        for k in inputs.POPULATION_FIELDS:
+            pop.fields.setdefault(k, Field())
+        inter = Intervention(fields={"product_name_inn": Field(value="Tovorafenib",
+                                                               provenance="confirmed")})
+        for k in inputs.INTERVENTION_FIELDS:
+            inter.fields.setdefault(k, Field())
+        areas = type("Areas", (), {"areas": ["Oncology"]})()
+        inv = load_source_inventory(FIXTURE_WORKBOOK, strict=False)
+        return pop, inter, areas, inv
+
+    def test_a_thin_mention_comparator_triggers_a_followup_round(self):
+        from jca_phase1.schema import LeakageGuard, RetrievedDocument
+
+        thin_doc = RetrievedDocument(
+            url="https://x.org/thin-mention-doc", resolved_url="https://x.org/thin-mention-doc",
+            text="thin-mention-doc: other agents studied include everolimus",
+            ok=True, source_class=C.SRC_CLINICAL_GUIDELINE)
+        main_result = type("R", (), {"documents": [thin_doc], "attempts": [],
+                                     "blocked_by_guard": []})()
+
+        followup_doc = RetrievedDocument(
+            url="https://x.org/followup-doc", resolved_url="https://x.org/followup-doc",
+            text="followup-doc: Everolimus showed an ORR of 12% in PNOC001",
+            ok=True, source_class=C.SRC_CLINICAL_GUIDELINE)
+        followup_result = type("R", (), {"documents": [followup_doc], "attempts": [],
+                                         "blocked_by_guard": []})()
+
+        execute_plan_calls = []
+
+        def fake_execute_plan(plan, *a, **kw):
+            execute_plan_calls.append(plan)
+            return main_result if len(execute_plan_calls) == 1 else followup_result
+
+        def fake_extraction(user_prompt):
+            if "thin-mention-doc" in user_prompt:
+                return json.dumps([{
+                    "finding_type": "comparator", "subject_drug": "Tovorafenib",
+                    "comparator": {"as_stated": "Everolimus", "role": "unclear",
+                                  "thin_mention": True},
+                    "population_context": {"disease": "LGG"},
+                    "evidence_quote": "other agents studied include everolimus"}])
+            if "followup-doc" in user_prompt:
+                return json.dumps([{
+                    "finding_type": "comparator", "subject_drug": "Tovorafenib",
+                    "comparator": {"as_stated": "Everolimus", "role": "active_comparator"},
+                    "population_context": {"disease": "LGG"},
+                    "evidence_quote": "Everolimus showed an ORR of 12% in PNOC001"}])
+            return "[]"
+
+        class _FakeStructured:
+            attempts: list = []
+            trials: list = []
+            publications: list = []
+
+        llm = ScriptedLLM({"a08.extraction": fake_extraction})
+        providers = orch.Providers(llm=llm, search=FixtureSearchProvider(documents={}))
+        pop, inter, areas, inv = self._fixture()
+        guard = LeakageGuard()
+
+        with unittest.mock.patch.object(orch.retrieval, "execute_plan",
+                                        side_effect=fake_execute_plan), \
+             unittest.mock.patch.object(orch.retrieval, "retrieve_structured",
+                                        return_value=_FakeStructured()):
+            result = orch._run_retrieval_pass(pop, inter, areas, inv, None, guard,
+                                              providers, orch.RunOptions())
+
+        self.assertGreaterEqual(len(execute_plan_calls), 2,
+                                "a thin-mention comparator must trigger a follow-up "
+                                "execute_plan() call")
+        self.assertTrue(any(d.url == "https://x.org/followup-doc" for d in result.documents),
+                        "the follow-up round's document must reach the final result")
+        followup_records = [r for r in result.records
+                            if r.comparator and r.comparator.as_stated == "Everolimus"
+                            and r.source_id == followup_doc.source_id]
+        self.assertTrue(followup_records, "the follow-up round's own extracted record "
+                                          "must reach result.records")
+
+    def test_no_thin_mentions_means_no_followup_call(self):
+        """Regression guard: a clean round with no thin_mention comparators
+        must not trigger a follow-up execute_plan() call."""
+        from jca_phase1.schema import LeakageGuard, RetrievedDocument
+
+        detailed_doc = RetrievedDocument(
+            url="https://x.org/detailed-doc", resolved_url="https://x.org/detailed-doc",
+            text="Topotecan 1.5 mg/m2 was given as second-line therapy.",
+            ok=True, source_class=C.SRC_CLINICAL_GUIDELINE)
+        main_result = type("R", (), {"documents": [detailed_doc], "attempts": [],
+                                     "blocked_by_guard": []})()
+        execute_plan_calls = []
+
+        def fake_execute_plan(plan, *a, **kw):
+            execute_plan_calls.append(plan)
+            return main_result
+
+        def fake_extraction(user_prompt):
+            return json.dumps([{
+                "finding_type": "comparator", "subject_drug": "Tovorafenib",
+                "comparator": {"as_stated": "Topotecan", "role": "active_comparator"},
+                "population_context": {"disease": "LGG"},
+                "evidence_quote": "Topotecan 1.5 mg/m2 was given as second-line therapy"}])
+
+        class _FakeStructured:
+            attempts: list = []
+            trials: list = []
+            publications: list = []
+
+        llm = ScriptedLLM({"a08.extraction": fake_extraction})
+        providers = orch.Providers(llm=llm, search=FixtureSearchProvider(documents={}))
+        pop, inter, areas, inv = self._fixture()
+        guard = LeakageGuard()
+
+        with unittest.mock.patch.object(orch.retrieval, "execute_plan",
+                                        side_effect=fake_execute_plan), \
+             unittest.mock.patch.object(orch.retrieval, "retrieve_structured",
+                                        return_value=_FakeStructured()):
+            orch._run_retrieval_pass(pop, inter, areas, inv, None, guard,
+                                     providers, orch.RunOptions())
+
+        self.assertEqual(len(execute_plan_calls), 1)
+
+    def test_followup_round_does_not_re_extract_an_already_cached_document(self):
+        """Dedup guard: if a follow-up query resurfaces a URL round 1 already
+        fetched/extracted, the SAME cache (keyed by source_id) must prevent
+        a second a08.extraction call for it."""
+        from jca_phase1.schema import LeakageGuard, RetrievedDocument
+
+        same_url = "https://x.org/same-thin-doc"
+        thin_doc = RetrievedDocument(
+            url=same_url, resolved_url=same_url,
+            text="thin-mention-doc: other agents studied include everolimus",
+            ok=True, source_class=C.SRC_CLINICAL_GUIDELINE)
+        main_result = type("R", (), {"documents": [thin_doc], "attempts": [],
+                                     "blocked_by_guard": []})()
+
+        # The follow-up query resurfaces the EXACT SAME URL/document.
+        same_doc_again = RetrievedDocument(
+            url=same_url, resolved_url=same_url,
+            text="thin-mention-doc: other agents studied include everolimus",
+            ok=True, source_class=C.SRC_CLINICAL_GUIDELINE)
+        followup_result = type("R", (), {"documents": [same_doc_again], "attempts": [],
+                                         "blocked_by_guard": []})()
+
+        execute_plan_calls = []
+
+        def fake_execute_plan(plan, *a, **kw):
+            execute_plan_calls.append(plan)
+            return main_result if len(execute_plan_calls) == 1 else followup_result
+
+        extraction_calls = []
+
+        def fake_extraction(user_prompt):
+            extraction_calls.append(user_prompt)
+            return json.dumps([{
+                "finding_type": "comparator", "subject_drug": "Tovorafenib",
+                "comparator": {"as_stated": "Everolimus", "role": "unclear",
+                              "thin_mention": True},
+                "population_context": {"disease": "LGG"},
+                "evidence_quote": "other agents studied include everolimus"}])
+
+        class _FakeStructured:
+            attempts: list = []
+            trials: list = []
+            publications: list = []
+
+        llm = ScriptedLLM({"a08.extraction": fake_extraction})
+        providers = orch.Providers(llm=llm, search=FixtureSearchProvider(documents={}))
+        pop, inter, areas, inv = self._fixture()
+        guard = LeakageGuard()
+
+        with unittest.mock.patch.object(orch.retrieval, "execute_plan",
+                                        side_effect=fake_execute_plan), \
+             unittest.mock.patch.object(orch.retrieval, "retrieve_structured",
+                                        return_value=_FakeStructured()):
+            orch._run_retrieval_pass(pop, inter, areas, inv, None, guard,
+                                     providers, orch.RunOptions())
+
+        self.assertGreaterEqual(len(execute_plan_calls), 2,
+                                "the follow-up round must still be attempted")
+        self.assertEqual(len(extraction_calls), 1,
+                         "the SAME document must not be extracted twice, even though "
+                         "the follow-up query resurfaced it")
 
 
 # ===========================================================================
